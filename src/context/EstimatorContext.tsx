@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
+// Assuming ComponentOption is imported here or in a type file
 import { ProjectEstimate, initialEstimate, ComponentOption } from "@/types/estimator";
 import { calculateCosts } from "@/utils/estimatorCalculations";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +12,7 @@ type EstimatorContextType = {
   updateEstimate: <K extends keyof ProjectEstimate>(field: K, value: ProjectEstimate[K]) => void;
   updateNestedEstimate: (category: keyof ProjectEstimate, field: string, value: any) => void;
   
-  // ✅ FIX ADDITION: Dedicated handler for component options
+  // ✅ ADDED: Dedicated handler for component options
   handleOptionChange: (field: keyof ProjectEstimate, value: ComponentOption) => void; 
   
   handleNext: () => void;
@@ -34,7 +35,6 @@ export const EstimatorProvider = ({ children }: { children: ReactNode }) => {
 
   // Recalculate costs whenever any relevant field changes
   useEffect(() => {
-    // ... (Your existing useEffect for cost calculation is correct)
     if (estimate.projectType && estimate.area > 0) {
       setIsCalculating(true);
       
@@ -60,7 +60,6 @@ export const EstimatorProvider = ({ children }: { children: ReactNode }) => {
     estimate.fixedFurniture, estimate.looseFurniture, estimate.furnishings, estimate.appliances
   ]);
 
-  // Existing general update (can be kept)
   const updateEstimate = <K extends keyof ProjectEstimate>(field: K, value: ProjectEstimate[K]) => {
     setEstimate(prev => ({
       ...prev,
@@ -68,16 +67,14 @@ export const EstimatorProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
   
-  // ✅ THE CRITICAL FIX FUNCTION: Used by all CategorySelectionGrid callers
+  // ✅ FIX ADDITION: The dedicated handler for options
   const handleOptionChange = (field: keyof ProjectEstimate, value: ComponentOption) => {
-    // This is the immutable update that fixes the rendering/toggling issue
     setEstimate(prev => ({
         ...prev,
         [field]: value
     }));
   };
   
-  // Existing nested update (can be kept)
   const updateNestedEstimate = (category: keyof ProjectEstimate, field: string, value: any) => {
     setEstimate(prev => {
       const categoryObj = prev[category];
@@ -96,29 +93,19 @@ export const EstimatorProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleNext = () => {
-    // ... (Your existing handleNext logic)
     if (step < totalSteps) {
       if (step === 1 && (!estimate.state || !estimate.city)) {
-        toast({
-          title: "Please select both state and city",
-          variant: "destructive"
-        });
+        toast({ title: "Please select both state and city", variant: "destructive" });
         return;
       }
       
       if (step === 2 && !estimate.projectType) {
-        toast({
-          title: "Please select a project type",
-          variant: "destructive"
-        });
+        toast({ title: "Please select a project type", variant: "destructive" });
         return;
       }
       
       if (step === 3 && !estimate.area) {
-        toast({
-          title: "Please specify the area",
-          variant: "destructive"
-        });
+        toast({ title: "Please specify the area", variant: "destructive" });
         return;
       }
       
@@ -138,7 +125,6 @@ export const EstimatorProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleSaveEstimate = () => {
-    // ... (Your existing handleSaveEstimate logic)
     const formattedDate = new Date().toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'short',
@@ -159,7 +145,7 @@ export const EstimatorProvider = ({ children }: { children: ReactNode }) => {
     estimate,
     updateEstimate,
     updateNestedEstimate,
-    handleOptionChange, // <--- EXPOSED: The new, clean handler for selections
+    handleOptionChange, // ✅ EXPOSED
     handleNext,
     handlePrevious,
     handleReset,
