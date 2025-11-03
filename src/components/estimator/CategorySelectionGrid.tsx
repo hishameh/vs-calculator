@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ComponentOption } from "@/types/estimator";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CategorySelectionGridProps {
@@ -30,14 +29,14 @@ const CategorySelectionGrid = ({
 }: CategorySelectionGridProps) => {
   const [hoveredOption, setHoveredOption] = useState<{component: string, option: string} | null>(null);
 
-  const handleToggleChange = (key: string, value: string, isDisabled: boolean) => {
+  const handleOptionClick = (key: string, option: string, isDisabled: boolean) => {
     if (isDisabled) return;
     
     // If clicking the same option that's already selected, deselect it
-    if (value === selectedOptions[key]) {
+    if (selectedOptions[key] === option) {
       onOptionChange(key, "" as ComponentOption);
-    } else if (value) {
-      onOptionChange(key, value as ComponentOption);
+    } else {
+      onOptionChange(key, option as ComponentOption);
     }
   };
 
@@ -77,20 +76,15 @@ const CategorySelectionGrid = ({
               </div>
 
               <TooltipProvider>
-                <ToggleGroup
-                  type="single"
-                  value={selectedOptions[key] || ""}
-                  onValueChange={(value) => handleToggleChange(key, value, isDisabled)}
-                  className="flex flex-wrap gap-3"
-                >
+                <div className="flex flex-wrap gap-3">
                   {Object.entries(category.options).map(([option, description]) => {
                     const isSelected = selectedOptions[key] === option;
                     
                     return (
                       <Tooltip key={option} delayDuration={300}>
                         <TooltipTrigger asChild>
-                          <ToggleGroupItem
-                            value={option}
+                          <button
+                            onClick={() => handleOptionClick(key, option, isDisabled)}
                             disabled={isDisabled}
                             className={cn(
                               "rounded-full px-4 py-2 text-sm capitalize transition-all",
@@ -104,7 +98,7 @@ const CategorySelectionGrid = ({
                             onMouseLeave={() => setHoveredOption(null)}
                           >
                             {option === 'basic' ? 'Standard' : option === 'mid' ? 'Premium' : 'Luxury'}
-                          </ToggleGroupItem>
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent className="p-3 max-w-xs bg-white shadow-lg border border-gray-100">
                           <p className="text-xs text-gray-600">
@@ -114,7 +108,7 @@ const CategorySelectionGrid = ({
                       </Tooltip>
                     );
                   })}
-                </ToggleGroup>
+                </div>
               </TooltipProvider>
 
               {hoveredOption && hoveredOption.component === key && !isDisabled && (
