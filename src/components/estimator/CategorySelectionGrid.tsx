@@ -44,13 +44,15 @@ const CategorySelectionGrid = ({
         {Object.entries(categories).map(([key, category]) => {
           // Check if component is disabled (optional and not enabled)
           const isDisabled = 'optional' in category && category.optional && 'enabled' in category && !category.enabled;
+          const isRequired = 'required' in category && category.required;
 
           return (
             <div key={key} className={cn("space-y-4", isDisabled && "opacity-50 pointer-events-none")}>
               <div className="flex items-center gap-3">
                 <div className={cn("bg-vs/10 p-2 rounded-lg", isDisabled && "bg-gray-200")}>{category.icon}</div>
                 <h4 className={cn("font-medium", isDisabled && "text-gray-400")}>{category.title}</h4>
-                {isDisabled && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Not Required</span>}
+                {isRequired && <span className="text-xs text-vs bg-vs/10 px-2 py-1 rounded-full font-medium">Required</span>}
+                {isDisabled && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Not Included</span>}
               </div>
 
               <TooltipProvider>

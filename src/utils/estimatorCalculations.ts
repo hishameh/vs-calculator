@@ -90,8 +90,12 @@ const calculateCategoryTotal = (
   
   components.forEach(component => {
     const option = estimate[component as keyof ProjectEstimate] as ComponentOption;
-    if (option) {
-      total += baseAmount * (multipliers[component][option] || 1);
+    // Only include if option is selected and not empty/none
+    if (option && option !== 'none') {
+      const multiplier = multipliers[component]?.[option];
+      if (multiplier !== undefined && multiplier > 0) {
+        total += baseAmount * multiplier;
+      }
     }
   });
   

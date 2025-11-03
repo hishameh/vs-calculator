@@ -5,6 +5,7 @@ import CategorySelectionGrid from "./CategorySelectionGrid";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface InteriorsStepProps {
   fixedFurniture: ComponentOption;
@@ -129,10 +130,20 @@ const InteriorsStep = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.entries(categories).map(([key, category]) => (
-            <div key={key} className="flex items-center justify-between p-4 rounded-lg border">
+            <div key={key} className={cn(
+              "flex items-center justify-between p-4 rounded-lg border transition-colors",
+              enabledComponents[key as keyof typeof enabledComponents] 
+                ? "border-vs/30 bg-vs/5" 
+                : "border-gray-200 bg-gray-50"
+            )}>
               <div className="flex items-center gap-3">
-                <div className="bg-vs/10 p-2 rounded-lg">{category.icon}</div>
-                <Label htmlFor={`toggle-${key}`}>{category.title}</Label>
+                <div className={cn(
+                  "p-2 rounded-lg",
+                  enabledComponents[key as keyof typeof enabledComponents] ? "bg-vs/10" : "bg-gray-200"
+                )}>{category.icon}</div>
+                <Label htmlFor={`toggle-${key}`} className={cn(
+                  enabledComponents[key as keyof typeof enabledComponents] ? "text-foreground" : "text-gray-400"
+                )}>{category.title}</Label>
               </div>
               <Switch 
                 id={`toggle-${key}`}
