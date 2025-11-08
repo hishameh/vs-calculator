@@ -1,204 +1,211 @@
-
-import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { ProjectEstimate } from "@/types/estimator";
 
-interface TimelineChartProps {
+interface PhaseTimelineCostProps {
   estimate: ProjectEstimate;
 }
 
-interface TimelineData {
+interface Phase {
   name: string;
-  months: number;
+  duration: number;
   cost: number;
-  fill: string;
+  percentage: number;
+  color: string;
+  startMonth: number;
+  endMonth: number;
 }
 
-const TimelineChart = ({ estimate }: TimelineChartProps) => {
-  const [data, setData] = useState<TimelineData[]>([]);
-
-  useEffect(() => {
-    const generateTimelineData = () => {
-      // Use predefined values for more accurate timeline planning
-      const projectType = estimate.projectType;
-      const area = estimate.area;
-      const isLarge = area > (estimate.areaUnit === 'sqft' ? 2000 : 185); // Convert to approx sqm
-      
-      // Base durations for residential projects
-      let planningMonths = 2;
-      let foundationMonths = 1.5;
-      let structureMonths = 3;
-      let coreMonths = 2;
-      let finishesMonths = 2;
-      let interiorsMonths = 1.5;
-      
-      // Adjust for project type
-      if (projectType === 'commercial') {
-        planningMonths += 1;
-        foundationMonths += 0.5;
-        structureMonths += 1;
-        coreMonths += 0.5;
-      } else if (projectType === 'mixed-use') {
-        planningMonths += 1.5;
-        foundationMonths += 1;
-        structureMonths += 1.5;
-        coreMonths += 1;
-        finishesMonths += 0.5;
-      }
-      
-      // Adjust for size
-      if (isLarge) {
-        foundationMonths += 0.5;
-        structureMonths += 1;
-        coreMonths += 0.5;
-        finishesMonths += 1;
-        interiorsMonths += 0.5;
-      }
-      
-      // Format values to appropriate precision
-      planningMonths = Math.max(1, Math.round(planningMonths));
-      foundationMonths = Math.max(1, Math.round(foundationMonths));
-      structureMonths = Math.max(1, Math.round(structureMonths));
-      coreMonths = Math.max(1, Math.round(coreMonths));
-      finishesMonths = Math.max(1, Math.round(finishesMonths));
-      interiorsMonths = Math.max(1, Math.round(interiorsMonths));
-      
-      // Calculate costs using distribution percentages
-      const totalCost = estimate.totalCost;
-      const planningCost = totalCost * 0.10;
-      const foundationCost = totalCost * 0.15;
-      const structureCost = totalCost * 0.25;
-      const coreCost = totalCost * 0.20;
-      const finishesCost = totalCost * 0.15;
-      const interiorsCost = totalCost * 0.15;
-      
-      const timelineData: TimelineData[] = [
-        {
-          name: "Planning & Approvals",
-          months: planningMonths,
-          cost: planningCost,
-          fill: "#64B5F6" // Blue
-        },
-        {
-          name: "Foundation & Site Work",
-          months: foundationMonths,
-          cost: foundationCost,
-          fill: "#81C784" // Green
-        },
-        {
-          name: "Structure & Framework",
-          months: structureMonths,
-          cost: structureCost,
-          fill: "#FFB74D" // Orange
-        },
-        {
-          name: "Core Systems Installation",
-          months: coreMonths,
-          cost: coreCost,
-          fill: "#BA68C8" // Purple
-        },
-        {
-          name: "Finishes & Surfaces",
-          months: finishesMonths,
-          cost: finishesCost,
-          fill: "#F06292" // Pink
-        },
-        {
-          name: "Interiors & Furnishing",
-          months: interiorsMonths,
-          cost: interiorsCost,
-          fill: "#4DB6AC" // Teal
-        }
-      ];
-
-      return timelineData;
-    };
-
-    setData(generateTimelineData());
-  }, [estimate]);
-
+const PhaseTimelineCost = ({ estimate }: PhaseTimelineCostProps) => {
   const formatCurrency = (value: number) => {
+    if (value >= 10000000) {
+      return `₹${(value / 10000000).toFixed(1)}Cr`;
+    } else if (value >= 100000) {
+      return `₹${(value / 100000).toFixed(1)}L`;
+    }
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(value).replace('₹', '₹');
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const totalMonths = data.months;
-      const totalCost = estimate.totalCost;
-      const costPercentage = Math.round((data.cost / totalCost) * 100);
-      
-      return (
-        <div className="bg-white p-3 border rounded-lg shadow-md">
-          <p className="font-medium">{data.name}</p>
-          <p><span className="font-medium">Duration:</span> {data.months} months</p>
-          <p><span className="font-medium">Cost:</span> {formatCurrency(data.cost)}</p>
-          <p className="text-xs text-gray-600">{costPercentage}% of total budget</p>
-        </div>
-      );
-    }
-    return null;
-  };
+  // Timeline phases with costs
+  const phases: Phase[] = [
+    { 
+      name: "Home Design & Approval", 
+      duration: estimate.timeline.phases.planning,
+      cost: estimate.phaseBreakdown.planning,
+      percentage: (estimate.phaseBreakdown.planning / estimate.totalCost) * 100,
+      color: "#FFD700",
+      startMonth: 1,
+      endMonth: estimate.timeline.phases.planning
+    },
+    { 
+      name: "Excavation", 
+      duration: Math.ceil(estimate.timeline.phases.construction * 0.1),
+      cost: estimate.phaseBreakdown.construction * 0.05,
+      percentage: (estimate.phaseBreakdown.construction * 0.05 / estimate.totalCost) * 100,
+      color: "#228B22",
+      startMonth: estimate.timeline.phases.planning + 1,
+      endMonth: estimate.timeline.phases.planning + Math.ceil(estimate.timeline.phases.construction * 0.1)
+    },
+    { 
+      name: "Footing & Foundation", 
+      duration: Math.ceil(estimate.timeline.phases.construction * 0.25),
+      cost: estimate.categoryBreakdown.construction * 0.25,
+      percentage: (estimate.categoryBreakdown.construction * 0.25 / estimate.totalCost) * 100,
+      color: "#000000",
+      startMonth: estimate.timeline.phases.planning + Math.ceil(estimate.timeline.phases.construction * 0.1) + 1,
+      endMonth: estimate.timeline.phases.planning + Math.ceil(estimate.timeline.phases.construction * 0.35)
+    },
+    { 
+      name: "RCC Work - Columns & Slabs", 
+      duration: Math.ceil(estimate.timeline.phases.construction * 0.25),
+      cost: estimate.categoryBreakdown.construction * 0.40,
+      percentage: (estimate.categoryBreakdown.construction * 0.40 / estimate.totalCost) * 100,
+      color: "#0000FF",
+      startMonth: estimate.timeline.phases.planning + Math.ceil(estimate.timeline.phases.construction * 0.35) + 1,
+      endMonth: estimate.timeline.phases.planning + Math.ceil(estimate.timeline.phases.construction * 0.60)
+    },
+    { 
+      name: "Roof Slab", 
+      duration: Math.ceil(estimate.timeline.phases.construction * 0.20),
+      cost: estimate.categoryBreakdown.construction * 0.30,
+      percentage: (estimate.categoryBreakdown.construction * 0.30 / estimate.totalCost) * 100,
+      color: "#FF0000",
+      startMonth: estimate.timeline.phases.planning + Math.ceil(estimate.timeline.phases.construction * 0.60) + 1,
+      endMonth: estimate.timeline.phases.planning + Math.ceil(estimate.timeline.phases.construction * 0.80)
+    },
+    { 
+      name: "Brickwork and Plastering", 
+      duration: Math.ceil(estimate.timeline.phases.construction * 0.15),
+      cost: estimate.categoryBreakdown.finishes * 0.30,
+      percentage: (estimate.categoryBreakdown.finishes * 0.30 / estimate.totalCost) * 100,
+      color: "#FFC0CB",
+      startMonth: estimate.timeline.phases.planning + Math.ceil(estimate.timeline.phases.construction * 0.80) + 1,
+      endMonth: estimate.timeline.phases.planning + estimate.timeline.phases.construction
+    },
+    { 
+      name: "Flooring & Tiling", 
+      duration: Math.ceil(estimate.timeline.phases.interiors * 0.30),
+      cost: estimate.categoryBreakdown.finishes * 0.40,
+      percentage: (estimate.categoryBreakdown.finishes * 0.40 / estimate.totalCost) * 100,
+      color: "#800080",
+      startMonth: estimate.timeline.phases.planning + estimate.timeline.phases.construction + 1,
+      endMonth: estimate.timeline.phases.planning + estimate.timeline.phases.construction + Math.ceil(estimate.timeline.phases.interiors * 0.30)
+    },
+    { 
+      name: "Electric Wiring", 
+      duration: Math.ceil(estimate.timeline.phases.interiors * 0.25),
+      cost: estimate.categoryBreakdown.core * 0.35,
+      percentage: (estimate.categoryBreakdown.core * 0.35 / estimate.totalCost) * 100,
+      color: "#FFA500",
+      startMonth: estimate.timeline.phases.planning + estimate.timeline.phases.construction + Math.ceil(estimate.timeline.phases.interiors * 0.30) + 1,
+      endMonth: estimate.timeline.phases.planning + estimate.timeline.phases.construction + Math.ceil(estimate.timeline.phases.interiors * 0.55)
+    },
+    { 
+      name: "Water Supply & Plumbing", 
+      duration: Math.ceil(estimate.timeline.phases.interiors * 0.30),
+      cost: estimate.categoryBreakdown.core * 0.40,
+      percentage: (estimate.categoryBreakdown.core * 0.40 / estimate.totalCost) * 100,
+      color: "#808080",
+      startMonth: estimate.timeline.phases.planning + estimate.timeline.phases.construction + Math.ceil(estimate.timeline.phases.interiors * 0.55) + 1,
+      endMonth: estimate.timeline.phases.planning + estimate.timeline.phases.construction + Math.ceil(estimate.timeline.phases.interiors * 0.85)
+    },
+    { 
+      name: "Door & Windows", 
+      duration: Math.ceil(estimate.timeline.phases.interiors * 0.15),
+      cost: estimate.categoryBreakdown.finishes * 0.30,
+      percentage: (estimate.categoryBreakdown.finishes * 0.30 / estimate.totalCost) * 100,
+      color: "#A0522D",
+      startMonth: estimate.timeline.phases.planning + estimate.timeline.phases.construction + Math.ceil(estimate.timeline.phases.interiors * 0.85) + 1,
+      endMonth: estimate.timeline.totalMonths
+    },
+  ];
+
+  const totalDuration = estimate.timeline.totalMonths;
 
   return (
-    <div className="mt-4">
-      <div className="h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            layout="vertical"
-            margin={{ top: 20, right: 30, left: 140, bottom: 20 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-            <XAxis 
-              type="number" 
-              label={{ value: 'Months', position: 'insideBottom', offset: -10 }} 
-              domain={[0, 'dataMax']}
-              tickCount={10}
-            />
-            <YAxis 
-              type="category" 
-              dataKey="name" 
-              width={140} 
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="months" radius={[0, 4, 4, 0]} barSize={24}>
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+    <div className="space-y-3">
+      {/* Overall duration banner */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 text-center">
+        <p className="text-xs text-yellow-800">
+          <span className="font-semibold">Overall duration:</span> {totalDuration} Months ({Math.round(totalDuration * 30)} Days)
+        </p>
       </div>
 
-      <div className="mt-8 text-sm text-vs-dark/70 bg-gray-50 p-4 rounded-lg">
-        <div className="font-medium mb-2 flex items-center">
-          <span className="text-vs mr-2">Timeline Notes:</span>
-        </div>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Timeline based on industry standards for {estimate.projectType} projects of this size</li>
-          <li>Actual durations may vary based on site conditions and contractor availability</li>
-          <li>Phases may overlap in actual construction scheduling</li>
-          <li>Weather delays and material procurement times not included</li>
-          <li>Approvals and permits may take longer depending on location</li>
-        </ul>
-        
-        <div className="mt-4 flex flex-wrap gap-2">
-          {data.map((item, index) => (
-            <div key={index} className="flex items-center text-xs">
-              <div className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: item.fill }}></div>
-              <span>{item.name}: {item.months} mo.</span>
+      {/* Phase breakdown */}
+      <div className="space-y-2">
+        {phases.map((phase, index) => (
+          <div key={index} className="space-y-1">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-gray-700 font-medium">{phase.name}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-600">
+                  {phase.duration} {phase.duration === 1 ? 'Month' : 'Months'}
+                </span>
+                <span className="text-vs font-semibold">{formatCurrency(phase.cost)}</span>
+              </div>
             </div>
+            
+            {/* Timeline bar */}
+            <div className="relative h-8 bg-gray-100 rounded-lg overflow-hidden">
+              <div 
+                className="absolute top-0 h-full flex items-center px-2 text-white text-[10px] font-medium transition-all"
+                style={{ 
+                  backgroundColor: phase.color,
+                  width: `${(phase.duration / totalDuration) * 100}%`,
+                  left: `${((phase.startMonth - 1) / totalDuration) * 100}%`
+                }}
+              >
+                <span className="truncate">
+                  {phase.duration > 1 ? `${phase.duration} months` : '1 month'}
+                </span>
+              </div>
+            </div>
+
+            {/* Cost percentage */}
+            <div className="flex justify-between text-[10px] text-gray-500">
+              <span>Month {phase.startMonth} - {phase.endMonth}</span>
+              <span>{phase.percentage.toFixed(1)}% of total</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Timeline ruler */}
+      <div className="mt-4">
+        <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+          {Array.from({ length: Math.min(totalDuration + 1, 13) }, (_, i) => (
+            <span key={i}>M{i}</span>
           ))}
+        </div>
+        <div className="h-1 bg-gray-200 w-full rounded-full"></div>
+      </div>
+
+      {/* Cost distribution summary */}
+      <div className="grid grid-cols-2 gap-2 mt-4">
+        <div className="bg-blue-50 p-2 rounded-lg">
+          <p className="text-[10px] text-blue-600 mb-0.5">Construction Phase</p>
+          <p className="text-sm font-bold text-blue-900">
+            {formatCurrency(estimate.phaseBreakdown.construction)}
+          </p>
+          <p className="text-[10px] text-blue-700">
+            {((estimate.phaseBreakdown.construction / estimate.totalCost) * 100).toFixed(0)}% of total
+          </p>
+        </div>
+        
+        <div className="bg-purple-50 p-2 rounded-lg">
+          <p className="text-[10px] text-purple-600 mb-0.5">Finishes & Interiors</p>
+          <p className="text-sm font-bold text-purple-900">
+            {formatCurrency(estimate.phaseBreakdown.interiors)}
+          </p>
+          <p className="text-[10px] text-purple-700">
+            {((estimate.phaseBreakdown.interiors / estimate.totalCost) * 100).toFixed(0)}% of total
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-export default TimelineChart;
+export default PhaseTimelineCost;
