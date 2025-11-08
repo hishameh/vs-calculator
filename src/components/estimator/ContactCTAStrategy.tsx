@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Phone, Mail, MessageSquare, Download, ChevronRight, CheckCircle2, Clock, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
