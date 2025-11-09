@@ -1,4 +1,3 @@
-// Fixed export syntax
 export type Typology = {
   model: 'PERCENT' | 'SQM';
   rate: number;
@@ -6,24 +5,12 @@ export type Typology = {
 };
 
 export type ArchitectFeeRates = {
-  typologies: {
-    [key: string]: Typology;
-  };
-  clientMultipliers: {
-    [key: string]: number;
-  };
-  complexity: {
-    [key: string]: number;
-  };
-  vizPrices: {
-    [key: string]: number;
-  };
-  extraRender: {
-    [key: string]: number;
-  };
-  conversionRates: {
-    [key: string]: number;
-  };
+  typologies: Record<string, Typology>;
+  clientMultipliers: Record<string, number>;
+  complexity: Record<string, number>;
+  vizPrices: Record<string, number>;
+  extraRender: Record<string, number>;
+  conversionRates: Record<string, number>;
   premiumMultiplier: number;
   rushMultiplier: number;
   profitMargin: number;
@@ -43,38 +30,22 @@ export type ArchitectFeeCalculation = {
   currency: string;
 };
 
-export const defaultArchitectFeeRates: ArchitectFeeRates = {
+export const defaultRates = {
   typologies: {
     "Individual House": { model: "PERCENT", rate: 0.08, min: 20000 },
     "Residential Block": { model: "PERCENT", rate: 0.05, min: 50000 },
     "Commercial": { model: "PERCENT", rate: 0.04, min: 80000 },
-    "Hospitality": { model: "PERCENT", rate: 0.075, min: 120000 },
-    "Institutional": { model: "PERCENT", rate: 0.035, min: 100000 },
-    "Industrial": { model: "PERCENT", rate: 0.03, min: 80000 },
-    "Interiors - Small": { model: "SQM", rate: 800, min: 15000 },
-    "Interiors - Mid": { model: "SQM", rate: 700, min: 40000 },
-    "Interiors - Large": { model: "SQM", rate: 600, min: 80000 },
-    "Landscape - Concept": { model: "SQM", rate: 150, min: 10000 },
-    "Landscape - Detailed": { model: "SQM", rate: 300, min: 20000 },
-    "FF&E Procurement": { model: "PERCENT", rate: 0.08, min: 15000 },
   },
   clientMultipliers: {
-    "Friend/Family": 0.85,
     "Individual": 1.0,
-    "High-end Residential": 1.25,
-    "Developer": 1.3,
     "Corporate": 1.4,
-    "Government": 1.5,
-    "NRI": 1.2,
+    "Developer": 1.3,
   },
   complexity: {
     "Basic": 1.0,
     "Standard": 1.15,
     "Premium": 1.35,
-    "Luxury": 1.5,
   },
-  premiumMultiplier: 1.15,
-  rushMultiplier: 1.25,
   vizPrices: {
     "Basic": 3000,
     "Standard": 12000,
@@ -89,12 +60,10 @@ export const defaultArchitectFeeRates: ArchitectFeeRates = {
     "INR": 1,
     "USD": 83.0,
     "EUR": 90.0,
-    "AED": 22.6,
-    "SAR": 22.1,
   },
+  premiumMultiplier: 1.15,
+  rushMultiplier: 1.25,
   profitMargin: 0.15,
   taxRate: 0.05,
   minimumFeeStudio: 7000,
 } as const;
-
-export default defaultArchitectFeeRates;
