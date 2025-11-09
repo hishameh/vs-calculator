@@ -1,10 +1,11 @@
-export interface Typology {
+// Fixed export syntax
+export type Typology = {
   model: 'PERCENT' | 'SQM';
   rate: number;
   min: number;
-}
+};
 
-export interface ArchitectFeeRates {
+export type ArchitectFeeRates = {
   typologies: {
     [key: string]: Typology;
   };
@@ -28,9 +29,9 @@ export interface ArchitectFeeRates {
   profitMargin: number;
   taxRate: number;
   minimumFeeStudio: number;
-}
+};
 
-export interface ArchitectFeeCalculation {
+export type ArchitectFeeCalculation = {
   baseFee: number;
   ffeFee: number;
   landscapeFee: number;
@@ -40,7 +41,7 @@ export interface ArchitectFeeCalculation {
   tax: number;
   totalFee: number;
   currency: string;
-}
+};
 
 export const defaultArchitectFeeRates: ArchitectFeeRates = {
   typologies: {
@@ -94,4 +95,6 @@ export const defaultArchitectFeeRates: ArchitectFeeRates = {
   profitMargin: 0.15,
   taxRate: 0.05,
   minimumFeeStudio: 7000,
-};
+} as const;
+
+export default defaultArchitectFeeRates;
