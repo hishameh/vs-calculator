@@ -1,24 +1,20 @@
-# .github/workflows/deploy.yml
-name: Deploy static content to Pages
+name: Deploy to GitHub Pages
+
 on:
   push:
-    branches: ['main'] # Change 'main' to 'master' if needed
+    branches: ['main']
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the latest one and the currently running one.
-# However, do NOT cancel in-progress runs as we want to allow for quick updates.
 concurrency:
   group: 'pages'
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  # Single deploy job since we're just deploying a static site
   deploy:
     environment:
       name: github-pages
@@ -27,22 +23,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: 18 # Use an LTS version of Node.js
+          node-version: 18
           cache: 'npm'
+          
       - name: Install dependencies
-        run: npm ci
-      - name: Build project
-        run: npm run build # This runs Vite's production build
+        run: npm install
+        
+      - name: Build
+        run: npm run build
+        
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v3
+        
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v2
         with:
-          # The output folder from npm run build
-          path: './dist' 
+          path: './dist'
+          
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v2
