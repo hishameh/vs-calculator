@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Share2, Download, ArrowLeft } from 'lucide-react';
+import { Share2, Download, ArrowLeft, Calculator } from 'lucide-react';
 import { ProjectEstimate } from '@/types/estimator';
 import { calculateArchitectFee } from '@/utils/architectFeeCalculations';
 import { formatCurrency } from '@/utils/formatters';
@@ -13,6 +13,7 @@ interface ResultsStepProps {
 }
 
 const ResultsStep: React.FC<ResultsStepProps> = ({ estimate, onReset, onSave }) => {
+  // Calculate rough architect fee
   const architectFee = calculateArchitectFee(
     estimate.projectType,
     estimate.totalCost,
@@ -97,36 +98,22 @@ const ResultsStep: React.FC<ResultsStepProps> = ({ estimate, onReset, onSave }) 
           </p>
         </div>
 
-        {/* Professional Fee */}
+        {/* Rough Professional Fee */}
         <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-xl text-center mt-4">
-          <h3 className="text-sm text-vs-dark/70 mb-2">Professional Fee</h3>
+          <h3 className="text-sm text-vs-dark/70 mb-2">Estimated Professional Fee (Rough)</h3>
           <p className="text-4xl font-bold text-primary mb-2">
             {formatCurrency(architectFee.totalFee)}
           </p>
-          <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
-            <div>
-              <p className="text-vs-dark/70">Base Design Fee</p>
-              <p className="font-semibold">{formatCurrency(architectFee.baseFee)}</p>
-            </div>
-            <div>
-              <p className="text-vs-dark/70">FF&E Fee</p>
-              <p className="font-semibold">{formatCurrency(architectFee.ffeFee)}</p>
-            </div>
-            <div>
-              <p className="text-vs-dark/70">Landscape Fee</p>
-              <p className="font-semibold">{formatCurrency(architectFee.landscapeFee)}</p>
-            </div>
-            <div>
-              <p className="text-vs-dark/70">Visualization</p>
-              <p className="font-semibold">{formatCurrency(architectFee.vizFee)}</p>
-            </div>
+          <div className="text-xs text-vs-dark/70 space-y-1 mt-3">
+            <p>This is an indicative professional fee estimate.</p>
+            <Link 
+              to="/architect-fee" 
+              className="inline-flex items-center gap-2 text-vs hover:text-vs-light mt-2 font-medium"
+            >
+              <Calculator size={14} />
+              Calculate Detailed Fee Breakdown →
+            </Link>
           </div>
-          <Link 
-            to="/architect-fee" 
-            className="text-primary hover:text-primary/80 text-sm mt-4 inline-block"
-          >
-            View Detailed Fee Breakdown →
-          </Link>
         </div>
       </div>
 
@@ -221,7 +208,7 @@ const ResultsStep: React.FC<ResultsStepProps> = ({ estimate, onReset, onSave }) 
         <ul className="list-disc pl-4 space-y-1">
           <li>This is an indicative estimate based on standard inputs and market rates for {estimate.city}</li>
           <li>Final costs may vary based on site conditions and specific requirements</li>
-          <li>Professional fees are subject to scope finalization</li>
+          <li>Professional fees are rough estimates - use detailed calculator for accurate quotation</li>
           <li>Timeline may vary based on approval processes and site conditions</li>
         </ul>
       </div>
