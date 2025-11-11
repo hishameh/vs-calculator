@@ -47,20 +47,21 @@ const Navbar = () => {
     };
   }, []);
   
-  const navItems = [{
-    label: "Work",
-    href: "#projects"
-  }, {
-    label: "About",
-    href: "#about"
-  }, {
-    label: "Contact",
-    href: "#contact"
-  }, {
-    label: "Architect Fee",
+ const navItems = [
+  { label: "Work", href: "#projects" },
+  { label: "About", href: "#about" },
+  { label: "Contact", href: "#contact" },
+  { 
+    label: "Estimator", 
+    href: "/estimator",
+    isRoute: true 
+  },
+  { 
+    label: "Architect Fee", 
     href: "/architect-fee",
-    isRoute: true
-  }];
+    isRoute: true 
+  }
+];
   
   const scrollToSection = (href: string) => {
     const element = document.getElementById(href.substring(1));
