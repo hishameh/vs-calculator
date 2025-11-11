@@ -17,8 +17,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: '/vanilla-space-sculpt-63019/', // Base path for GitHub Pages
+  base: mode === 'production' ? '/vanilla-space-sculpt-63019/' : '/',
   build: {
     outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
   }
 }));
