@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Calculator } from "lucide-react";
 import EstimatorWizard from "@/components/EstimatorWizard";
 
 const Index = () => {
@@ -10,24 +8,14 @@ const Index = () => {
   
   return (
     <div className="min-h-screen bg-background py-4 px-4">
-      {/* Simple Header with Logo/Title */}
+      {/* Simple Header with Logo */}
       <div className="container-custom max-w-5xl mx-auto mb-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/lovable-uploads/1938f286-8b49-49bf-bc47-3ac7ef7d6cab.png" 
-              alt="Vanilla & Somethin'" 
-              className="h-16 md:h-20"
-            />
-          </div>
-          <Link 
-            to="/architect-fee"
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-vs/10 hover:bg-vs/20 text-vs rounded-lg transition-colors"
-          >
-            <Calculator size={16} />
-            <span className="hidden sm:inline">Detailed Fee Calculator</span>
-            <span className="sm:hidden">Fees</span>
-          </Link>
+        <div className="flex justify-center items-center">
+          <img 
+            src="/lovable-uploads/1938f286-8b49-49bf-bc47-3ac7ef7d6cab.png" 
+            alt="Vanilla & Somethin'" 
+            className="h-16 md:h-20"
+          />
         </div>
       </div>
 
@@ -37,7 +25,7 @@ const Index = () => {
             Project Cost Estimator
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto text-sm">
-            Get an accurate estimate for your architecture or interior design project in just a few steps.
+            Get an accurate, transparent estimate for your complete project - construction, architecture & interiors.
           </p>
         </div>
         
