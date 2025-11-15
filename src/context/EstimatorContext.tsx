@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ProjectEstimate, ComponentOption } from '@/types/estimator';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// Component pricing per square meter (in INR)
+type ComponentOption = 'none' | 'standard' | 'premium' | 'luxury';
+
 const COMPONENT_PRICING: Record<string, Record<ComponentOption, number>> = {
   civilQuality: { none: 0, standard: 850, premium: 1150, luxury: 1530 },
   plumbing: { none: 0, standard: 180, premium: 350, luxury: 700 },
@@ -21,122 +21,108 @@ const COMPONENT_PRICING: Record<string, Record<ComponentOption, number>> = {
   landscape: { none: 0, standard: 120, premium: 280, luxury: 650 },
 };
 
-// Component included elements
 const COMPONENT_DETAILS: Record<string, Record<ComponentOption, string[]>> = {
   civilQuality: {
     none: [],
-    standard: ['Basic foundation', 'Standard bricks', 'Regular cement', 'Basic plastering', 'Standard waterproofing'],
-    premium: ['Enhanced foundation', 'Premium bricks', 'High-grade cement', 'Fine plastering', 'Advanced waterproofing', 'Seismic considerations'],
-    luxury: ['Premium foundation', 'Luxury bricks/blocks', 'Superior cement', 'Expert plastering', 'Top-grade waterproofing', 'Full seismic design', 'Thermal insulation']
+    standard: ['Basic foundation', 'Standard bricks', 'Regular cement'],
+    premium: ['Enhanced foundation', 'Premium bricks', 'High-grade cement'],
+    luxury: ['Premium foundation', 'Luxury blocks', 'Superior cement']
   },
   plumbing: {
     none: [],
-    standard: ['CPVC pipes', 'Standard fixtures', 'Basic fittings', 'Standard drainage'],
-    premium: ['Premium CPVC', 'Mid-range fixtures', 'Quality fittings', 'Enhanced drainage', 'Water purifier points'],
-    luxury: ['Copper/PPR pipes', 'Luxury fixtures', 'Designer fittings', 'Advanced drainage', 'Water treatment system', 'Hot water circulation']
+    standard: ['CPVC pipes', 'Standard fixtures'],
+    premium: ['Premium CPVC', 'Mid-range fixtures'],
+    luxury: ['Copper pipes', 'Luxury fixtures']
   },
   electrical: {
     none: [],
-    standard: ['Standard wiring', 'Basic switches', 'Regular outlets', 'MCB panel'],
-    premium: ['Premium wiring', 'Modular switches', 'Multiple outlets', 'RCCB protection', 'Smart home ready'],
-    luxury: ['Armoured cables', 'Designer switches', 'Abundant outlets', 'Full automation', 'Home automation', 'Backup systems']
+    standard: ['Standard wiring', 'Basic switches'],
+    premium: ['Premium wiring', 'Modular switches'],
+    luxury: ['Armoured cables', 'Designer switches']
   },
   ac: {
     none: [],
-    standard: ['Split AC provision', 'Basic ducting', 'Standard vents'],
-    premium: ['VRF ready', 'Concealed ducting', 'Premium vents', 'Zoned cooling'],
-    luxury: ['VRF/Cassette system', 'Full concealment', 'Designer grilles', 'Multi-zone control', 'Air purification']
+    standard: ['Split AC provision'],
+    premium: ['VRF ready', 'Concealed ducting'],
+    luxury: ['VRF system', 'Full concealment']
   },
   elevator: {
     none: [],
-    standard: ['Basic elevator shaft', 'Standard lift', '4-6 person capacity'],
-    premium: ['Enhanced shaft', 'Mid-range lift', '6-8 person capacity', 'Automatic doors'],
-    luxury: ['Premium shaft', 'Luxury elevator', '8-13 person capacity', 'Smart controls', 'Designer cabin']
+    standard: ['Basic elevator shaft'],
+    premium: ['Enhanced shaft', 'Mid-range lift'],
+    luxury: ['Premium shaft', 'Luxury elevator']
   },
   buildingEnvelope: {
     none: [],
-    standard: ['Basic exterior paint', 'Standard weather coating', 'Basic insulation'],
-    premium: ['Textured exterior', 'Premium weather coating', 'Enhanced insulation', 'Decorative elements'],
-    luxury: ['Designer facade', 'High-performance coating', 'Superior insulation', 'Architectural features', 'Cladding options']
+    standard: ['Basic exterior paint'],
+    premium: ['Textured exterior'],
+    luxury: ['Designer facade']
   },
   lighting: {
     none: [],
-    standard: ['LED fixtures', 'Basic design', 'Standard switches'],
-    premium: ['Designer LED', 'Ambient lighting', 'Dimmer controls', 'Cove lighting'],
-    luxury: ['Premium fixtures', 'Layered lighting', 'Smart controls', 'Feature lighting', 'Chandelier provisions']
+    standard: ['LED fixtures'],
+    premium: ['Designer LED', 'Ambient lighting'],
+    luxury: ['Premium fixtures', 'Smart controls']
   },
   windows: {
     none: [],
-    standard: ['UPVC windows', 'Clear glass', 'Mosquito nets', 'Standard grilles'],
-    premium: ['Premium UPVC', 'Tinted/Reflective glass', 'Hidden grilles', 'Weather stripping'],
-    luxury: ['Aluminium/Wood', 'Double glazing', 'Automated controls', 'Designer frames', 'Sound insulation']
+    standard: ['UPVC windows'],
+    premium: ['Premium UPVC', 'Tinted glass'],
+    luxury: ['Aluminium', 'Double glazing']
   },
   ceiling: {
     none: [],
-    standard: ['Gypsum board', 'POP corners', 'Basic design'],
-    premium: ['Designer gypsum', 'POP patterns', 'Cove lighting', 'Multiple levels'],
-    luxury: ['Premium materials', 'Complex patterns', 'Integrated lighting', 'Multi-level design', 'Acoustic treatment']
+    standard: ['Gypsum board'],
+    premium: ['Designer gypsum'],
+    luxury: ['Premium materials', 'Complex patterns']
   },
   surfaces: {
     none: [],
-    standard: ['Vitrified tiles', 'Basic marble', 'Standard paint', 'Regular counters'],
-    premium: ['Premium tiles', 'Italian marble', 'Texture paint', 'Granite counters', 'Feature walls'],
-    luxury: ['Imported tiles', 'Premium marble/Onyx', 'Designer finishes', 'Quartz counters', 'Wood paneling', 'Stone cladding']
+    standard: ['Vitrified tiles'],
+    premium: ['Premium tiles', 'Italian marble'],
+    luxury: ['Imported tiles', 'Premium marble']
   },
   fixedFurniture: {
     none: [],
-    standard: ['Plywood cabinets', 'Laminate finish', 'Basic hardware', 'Standard wardrobes'],
-    premium: ['Boiling water resistant plywood', 'Premium laminate', 'Soft-close hardware', 'Designer wardrobes', 'Kitchen modules'],
-    luxury: ['Marine plywood', 'Veneer/Lacquer finish', 'Premium hardware', 'Walk-in wardrobes', 'Modular kitchen', 'Study units']
+    standard: ['Plywood cabinets'],
+    premium: ['BWR plywood', 'Premium laminate'],
+    luxury: ['Marine plywood', 'Veneer finish']
   },
   looseFurniture: {
     none: [],
-    standard: ['Essential furniture', 'Standard quality', 'Basic design'],
-    premium: ['Designer furniture', 'Quality materials', 'Coordinated design', 'Upholstery'],
-    luxury: ['Premium furniture', 'Luxury materials', 'Custom design', 'Premium upholstery', 'Branded items']
+    standard: ['Essential furniture'],
+    premium: ['Designer furniture'],
+    luxury: ['Premium furniture', 'Custom design']
   },
   furnishings: {
     none: [],
-    standard: ['Basic curtains', 'Standard blinds', 'Regular cushions'],
-    premium: ['Designer curtains', 'Motorized blinds', 'Decorative cushions', 'Throws'],
-    luxury: ['Premium drapes', 'Automated blinds', 'Designer cushions', 'Luxury throws', 'Rugs', 'Wall art']
+    standard: ['Basic curtains'],
+    premium: ['Designer curtains'],
+    luxury: ['Premium drapes', 'Automated blinds']
   },
   appliances: {
     none: [],
-    standard: ['Basic kitchen appliances', 'Standard brand'],
-    premium: ['Mid-range appliances', 'Good brands', 'Built-in options'],
-    luxury: ['Premium appliances', 'International brands', 'Fully built-in', 'Smart features', 'Wine cooler']
+    standard: ['Basic appliances'],
+    premium: ['Mid-range appliances'],
+    luxury: ['Premium appliances', 'Built-in']
   },
   artefacts: {
     none: [],
-    standard: ['Basic decor items', 'Standard artwork'],
-    premium: ['Designer decor', 'Quality artwork', 'Sculptures'],
-    luxury: ['Premium decor', 'Original artwork', 'Designer sculptures', 'Collectibles', 'Feature pieces']
+    standard: ['Basic decor'],
+    premium: ['Designer decor'],
+    luxury: ['Premium decor', 'Original artwork']
   },
   landscape: {
     none: [],
-    standard: ['Basic landscaping', 'Lawn', 'Border plants', 'Simple paving'],
-    premium: ['Designer landscape', 'Themed garden', 'Water feature', 'Outdoor lighting', 'Paved pathways'],
-    luxury: ['Premium landscape', 'Complex design', 'Multiple water features', 'Gazebo', 'Outdoor kitchen', 'Irrigation system']
+    standard: ['Basic landscaping'],
+    premium: ['Designer landscape'],
+    luxury: ['Premium landscape', 'Water features']
   },
 };
 
-// Project type definitions with scope details
 export const PROJECT_TYPES = {
-  'interior-only': {
-    label: 'Interior Design Only',
-    description: 'Interior finishing, furniture, and styling',
-    excludes: ['civilQuality', 'plumbing', 'electrical', 'buildingEnvelope', 'elevator'],
-    baseRate: 0,
-  },
-  'core-shell': {
-    label: 'Core & Shell',
-    description: 'Structure, MEP systems, basic envelope',
-    excludes: ['fixedFurniture', 'looseFurniture', 'furnishings', 'appliances', 'artefacts', 'landscape'],
-    baseRate: 850,
-  },
   'full-project': {
-    label: 'Full Project (No Landscape)',
+    label: 'Full Project',
     description: 'Complete construction and interiors',
     excludes: ['landscape'],
     baseRate: 850,
@@ -147,45 +133,54 @@ export const PROJECT_TYPES = {
     excludes: [],
     baseRate: 850,
   },
-  'renovation': {
-    label: 'Renovation/Remodel',
-    description: 'Updating existing structure',
-    excludes: ['elevator'],
-    baseRate: 700,
-  },
 };
 
-const calculateConstructionCost = (
-  projectType: string,
-  areaInSqM: number,
-  civilQuality: ComponentOption,
-  buildingType: string
-): number => {
-  const projectConfig = PROJECT_TYPES[projectType as keyof typeof PROJECT_TYPES];
-  
-  if (projectConfig.excludes.includes('civilQuality')) {
-    return 0; // No construction cost for interior-only projects
-  }
-
-  let baseRate = projectConfig.baseRate;
-  
-  // Adjust for building type
-  if (buildingType === 'commercial') baseRate *= 1.3;
-  else if (buildingType === 'mixed-use') baseRate *= 1.5;
-  
-  // Scale factor for area
-  let scaleFactor = 1.0;
-  if (areaInSqM < 30) scaleFactor = 1.10;
-  else if (areaInSqM < 50) scaleFactor = 1.06;
-  else if (areaInSqM < 100) scaleFactor = 1.03;
-  
-  // Quality multiplier
-  let qualityMultiplier = 1.0;
-  if (civilQuality === "premium") qualityMultiplier = 1.35;
-  else if (civilQuality === "luxury") qualityMultiplier = 1.80;
-  
-  return baseRate * areaInSqM * scaleFactor * qualityMultiplier;
-};
+interface ProjectEstimate {
+  state: string;
+  city: string;
+  projectType: string;
+  buildingType: string;
+  area: number;
+  areaUnit: string;
+  civilQuality: ComponentOption;
+  plumbing: ComponentOption;
+  electrical: ComponentOption;
+  ac: ComponentOption;
+  elevator: ComponentOption;
+  buildingEnvelope: ComponentOption;
+  lighting: ComponentOption;
+  windows: ComponentOption;
+  ceiling: ComponentOption;
+  surfaces: ComponentOption;
+  fixedFurniture: ComponentOption;
+  looseFurniture: ComponentOption;
+  furnishings: ComponentOption;
+  appliances: ComponentOption;
+  artefacts: ComponentOption;
+  landscape: ComponentOption;
+  totalCost: number;
+  componentCosts: Record<string, number>;
+  categoryBreakdown: {
+    construction: number;
+    core: number;
+    finishes: number;
+    interiors: number;
+    landscape: number;
+  };
+  phaseBreakdown: {
+    planning: number;
+    construction: number;
+    interiors: number;
+  };
+  timeline: {
+    totalMonths: number;
+    phases: {
+      planning: number;
+      construction: number;
+      interiors: number;
+    };
+  };
+}
 
 interface EstimatorContextType {
   step: number;
@@ -221,8 +216,6 @@ const initialEstimate: ProjectEstimate = {
   buildingType: 'residential',
   area: 1000,
   areaUnit: 'sqft',
-  complexity: 5,
-  selectedMaterials: [],
   civilQuality: 'standard',
   plumbing: 'standard',
   electrical: 'standard',
@@ -263,11 +256,11 @@ const initialEstimate: ProjectEstimate = {
   componentCosts: {},
 };
 
-export const EstimatorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const EstimatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [step, setStep] = useState(1);
   const [estimate, setEstimate] = useState<ProjectEstimate>(initialEstimate);
   const [isCalculating, setIsCalculating] = useState(false);
-  const totalSteps = 6; // Added contact/meeting step
+  const totalSteps = 3;
 
   const updateEstimate = (field: keyof ProjectEstimate, value: any) => {
     setEstimate(prev => ({ ...prev, [field]: value }));
@@ -284,76 +277,33 @@ export const EstimatorProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const projectConfig = PROJECT_TYPES[estimate.projectType as keyof typeof PROJECT_TYPES];
     
-    const constructionCost = calculateConstructionCost(
-      estimate.projectType,
-      areaInSqM,
-      estimate.civilQuality,
-      estimate.buildingType
-    );
-
+    let totalCost = 0;
+    const componentCosts: Record<string, number> = {};
+    let constructionCost = 0;
     let coreCost = 0;
     let finishesCost = 0;
     let interiorsCost = 0;
     let landscapeCost = 0;
-    const componentCosts: Record<string, number> = {};
 
-    // Calculate component costs (respecting project type exclusions)
-    const coreComponents = ['plumbing', 'electrical', 'ac', 'elevator'];
-    const finishComponents = ['buildingEnvelope', 'lighting', 'windows', 'ceiling', 'surfaces'];
-    const interiorComponents = ['fixedFurniture', 'looseFurniture', 'furnishings', 'appliances', 'artefacts'];
-    const landscapeComponents = ['landscape'];
-
-    // Add civil quality to component costs if not excluded
-    if (!projectConfig.excludes.includes('civilQuality') && estimate.civilQuality !== 'none') {
-      componentCosts.civilQuality = COMPONENT_PRICING.civilQuality[estimate.civilQuality] * areaInSqM;
-    }
-
-    coreComponents.forEach(comp => {
-      if (!projectConfig.excludes.includes(comp)) {
+    Object.keys(COMPONENT_PRICING).forEach(comp => {
+      if (!projectConfig?.excludes.includes(comp)) {
         const value = estimate[comp as keyof ProjectEstimate] as ComponentOption;
         const cost = (COMPONENT_PRICING[comp]?.[value] || 0) * areaInSqM;
-        coreCost += cost;
-        if (cost > 0) componentCosts[comp] = cost;
+        
+        if (cost > 0) {
+          componentCosts[comp] = cost;
+          totalCost += cost;
+
+          if (comp === 'civilQuality') constructionCost += cost;
+          else if (['plumbing', 'electrical', 'ac', 'elevator'].includes(comp)) coreCost += cost;
+          else if (['buildingEnvelope', 'lighting', 'windows', 'ceiling', 'surfaces'].includes(comp)) finishesCost += cost;
+          else if (['fixedFurniture', 'looseFurniture', 'furnishings', 'appliances', 'artefacts'].includes(comp)) interiorsCost += cost;
+          else if (comp === 'landscape') landscapeCost += cost;
+        }
       }
     });
 
-    finishComponents.forEach(comp => {
-      if (!projectConfig.excludes.includes(comp)) {
-        const value = estimate[comp as keyof ProjectEstimate] as ComponentOption;
-        const cost = (COMPONENT_PRICING[comp]?.[value] || 0) * areaInSqM;
-        finishesCost += cost;
-        if (cost > 0) componentCosts[comp] = cost;
-      }
-    });
-
-    interiorComponents.forEach(comp => {
-      if (!projectConfig.excludes.includes(comp)) {
-        const value = estimate[comp as keyof ProjectEstimate] as ComponentOption;
-        const cost = (COMPONENT_PRICING[comp]?.[value] || 0) * areaInSqM;
-        interiorsCost += cost;
-        if (cost > 0) componentCosts[comp] = cost;
-      }
-    });
-
-    landscapeComponents.forEach(comp => {
-      if (!projectConfig.excludes.includes(comp)) {
-        const value = estimate[comp as keyof ProjectEstimate] as ComponentOption;
-        const cost = (COMPONENT_PRICING[comp]?.[value] || 0) * areaInSqM;
-        landscapeCost += cost;
-        if (cost > 0) componentCosts[comp] = cost;
-      }
-    });
-
-    const totalCost = constructionCost + coreCost + finishesCost + interiorsCost + landscapeCost;
-
-    // Calculate timeline based on project type and building type
-    let baseMonths = 8;
-    if (estimate.buildingType === 'commercial') baseMonths = 10;
-    else if (estimate.buildingType === 'mixed-use') baseMonths = 12;
-    
-    if (estimate.projectType === 'interior-only') baseMonths = 4;
-    else if (estimate.projectType === 'renovation') baseMonths = 6;
-
+    const baseMonths = 8;
     const planningMonths = Math.ceil(baseMonths * 0.15);
     const constructionMonths = Math.ceil(baseMonths * 0.55);
     const interiorsMonths = Math.ceil(baseMonths * 0.30);
@@ -385,42 +335,15 @@ export const EstimatorProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }));
   };
 
-  // Real-time calculation when components change
   useEffect(() => {
-    if (step >= 3) {
+    if (step >= 2) {
       calculateRealTimeCost();
     }
-  }, [
-    estimate.projectType,
-    estimate.buildingType,
-    estimate.area,
-    estimate.areaUnit,
-    estimate.civilQuality,
-    estimate.plumbing,
-    estimate.electrical,
-    estimate.ac,
-    estimate.elevator,
-    estimate.buildingEnvelope,
-    estimate.lighting,
-    estimate.windows,
-    estimate.ceiling,
-    estimate.surfaces,
-    estimate.fixedFurniture,
-    estimate.looseFurniture,
-    estimate.furnishings,
-    estimate.appliances,
-    estimate.artefacts,
-    estimate.landscape,
-    step,
-  ]);
+  }, [estimate.area, estimate.civilQuality, estimate.plumbing, step]);
 
   const handleNext = () => {
     if (step < totalSteps) {
-      setIsCalculating(true);
-      setTimeout(() => {
-        setStep(step + 1);
-        setIsCalculating(false);
-      }, 300);
+      setStep(step + 1);
     }
   };
 
@@ -437,7 +360,6 @@ export const EstimatorProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const handleSaveEstimate = () => {
     console.log('Saving estimate:', estimate);
-    // This would integrate with your backend or storage
   };
 
   return (
