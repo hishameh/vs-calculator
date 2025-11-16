@@ -16,10 +16,10 @@ const ImprovedCostVisualization = ({ estimate }: ImprovedCostVisualizationProps)
   };
 
   const COLORS = {
-    construction: 'hsl(var(--vs))',
-    core: 'hsl(var(--vs-dark))',
-    finishes: 'hsl(var(--accent))',
-    interiors: 'hsl(var(--muted))'
+    construction: '#4f090c',    // Deep maroon (primary VS color)
+    core: '#8B1518',            // Medium red
+    finishes: '#B91C1C',        // Bright red
+    interiors: '#DC2626'        // Light red
   };
 
   const categoryData = [

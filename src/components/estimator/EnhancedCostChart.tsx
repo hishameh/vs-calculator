@@ -17,7 +17,7 @@ interface EnhancedCostChartProps {
   totalCost: number;
 }
 
-const COLORS = ['#7A1E1F', '#a45a5a', '#c68e8e', '#e9cece', '#f1e1e1'];
+const COLORS = ['#4f090c', '#8B1518', '#B91C1C', '#DC2626', '#F87171'];
 
 const EnhancedCostChart = ({ data, totalCost }: EnhancedCostChartProps) => {
   const [activeIndex, setActiveIndex] = useState(-1);
