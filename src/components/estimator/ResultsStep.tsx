@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ProjectEstimate, ComponentOption } from "@/types/estimator";
 import { Share, CheckCircle2, Download, IndianRupee } from "lucide-react";
@@ -54,6 +54,35 @@ const COMPONENT_DESCRIPTIONS: Record<string, string> = {
 
 const ResultsStep = ({ estimate, onReset, onSave }: ResultsStepProps) => {
   const { toast } = useToast();
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const meetingSchedulerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll detection to trigger meeting scheduler popup
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Trigger when user is within 200px of the bottom
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200;
+
+      if (isNearBottom && !hasScrolledToBottom) {
+        setHasScrolledToBottom(true);
+        // Smooth scroll to meeting scheduler
+        setTimeout(() => {
+          meetingSchedulerRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }, 300);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [hasScrolledToBottom]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -276,7 +305,10 @@ const ResultsStep = ({ estimate, onReset, onSave }: ResultsStepProps) => {
   const totalWithArchitectFee = estimate.totalCost + architectFee;
 
   return (
-    <div className="space-y-6 overflow-y-auto overflow-x-hidden max-h-[85vh] px-2 pb-6">
+    <div
+      ref={scrollContainerRef}
+      className="space-y-6 overflow-y-auto overflow-x-hidden max-h-[85vh] px-2 pb-6"
+    >
       {/* Main Summary Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -398,7 +430,9 @@ const ResultsStep = ({ estimate, onReset, onSave }: ResultsStepProps) => {
       </motion.div>
 
       {/* Meeting Scheduler */}
-      <MeetingScheduler />
+      <div ref={meetingSchedulerRef}>
+        <MeetingScheduler autoExpand={hasScrolledToBottom} />
+      </div>
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3 justify-center">
