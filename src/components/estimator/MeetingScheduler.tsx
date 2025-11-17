@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Video, Building, MessageCircle, Mail, Calendar, CheckCircle2, ChevronRight, Clock } from "lucide-react";
+import { MapPin, Video, Building, MessageCircle, Mail, Calendar, CheckCircle2, ChevronRight, Clock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CalBookingForm from "./CalBookingForm";
+import { isCalComConfigured } from "@/utils/calcom";
 
-type MainOptionType = "schedule" | "whatsapp" | "email";
+type MainOptionType = "schedule" | "api-booking" | "whatsapp" | "email";
 type ScheduleSubOption = "on-site" | "in-office" | "virtual";
 
 interface MainOption {
@@ -25,9 +27,10 @@ interface ScheduleOption {
 
 interface MeetingSchedulerProps {
   autoExpand?: boolean;
+  estimate?: any; // ProjectEstimate
 }
 
-const MeetingScheduler = ({ autoExpand = false }: MeetingSchedulerProps) => {
+const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProps) => {
   const [selectedMainOption, setSelectedMainOption] = useState<MainOptionType | null>(null);
   const [selectedSubOption, setSelectedSubOption] = useState<ScheduleSubOption | null>(null);
   const [shouldPulse, setShouldPulse] = useState(false);
@@ -48,6 +51,13 @@ const MeetingScheduler = ({ autoExpand = false }: MeetingSchedulerProps) => {
   const email = "hello@vanillasometh.in";
 
   const mainOptions: MainOption[] = [
+    ...(isCalComConfigured() ? [{
+      id: "api-booking" as MainOptionType,
+      title: "Instant Booking",
+      description: "Book directly with live availability",
+      icon: <Zap className="size-6" />,
+      hasSubOptions: true,
+    }] : []),
     {
       id: "schedule",
       title: "Schedule Meeting",
@@ -177,7 +187,29 @@ const MeetingScheduler = ({ autoExpand = false }: MeetingSchedulerProps) => {
       </div>
 
       <AnimatePresence mode="wait">
-        {selectedMainOption === "schedule" ? (
+        {selectedMainOption === "api-booking" ? (
+          <motion.div
+            key="api-booking"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Back button */}
+            <button
+              onClick={handleBack}
+              className="mb-4 text-sm text-vs hover:text-vs/80 flex items-center gap-1 transition-colors"
+            >
+              ← Back to main options
+            </button>
+
+            <CalBookingForm
+              estimate={estimate}
+              onSuccess={handleBack}
+              onCancel={handleBack}
+            />
+          </motion.div>
+        ) : selectedMainOption === "schedule" ? (
           <motion.div
             key="schedule-options"
             initial={{ opacity: 0, x: 20 }}
