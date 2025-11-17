@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Video, Building, MessageCircle, Mail, Calendar, CheckCircle2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,9 +23,24 @@ interface ScheduleOption {
   action: () => void;
 }
 
-const MeetingScheduler = () => {
+interface MeetingSchedulerProps {
+  autoExpand?: boolean;
+}
+
+const MeetingScheduler = ({ autoExpand = false }: MeetingSchedulerProps) => {
   const [selectedMainOption, setSelectedMainOption] = useState<MainOptionType | null>(null);
   const [selectedSubOption, setSelectedSubOption] = useState<ScheduleSubOption | null>(null);
+  const [shouldPulse, setShouldPulse] = useState(false);
+
+  // Auto-expand when triggered from parent
+  useEffect(() => {
+    if (autoExpand && !selectedMainOption) {
+      setShouldPulse(true);
+      // Auto-dismiss pulse after 3 seconds
+      const timer = setTimeout(() => setShouldPulse(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [autoExpand, selectedMainOption]);
 
   const whatsappNumber = "917411349844";
   const email = "hello@vanillasometh.in";
@@ -114,19 +129,44 @@ const MeetingScheduler = () => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="bg-white p-6 rounded-xl border border-vs/10 shadow-sm"
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: shouldPulse ? [1, 1.02, 1] : 1,
+      }}
+      transition={{
+        duration: 0.5,
+        delay: 0.2,
+        scale: {
+          repeat: shouldPulse ? 2 : 0,
+          duration: 0.6,
+        }
+      }}
+      className={cn(
+        "bg-white p-6 rounded-xl border shadow-sm transition-all duration-300",
+        shouldPulse
+          ? "border-vs shadow-lg ring-2 ring-vs/20"
+          : "border-vs/10"
+      )}
     >
       <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center size-12 rounded-full bg-vs/10 text-vs mb-3">
+        <div className={cn(
+          "inline-flex items-center justify-center size-12 rounded-full transition-all duration-300 mb-3",
+          shouldPulse
+            ? "bg-vs text-white animate-pulse"
+            : "bg-vs/10 text-vs"
+        )}>
           <Calendar className="size-6" />
         </div>
-        <h3 className="text-xl font-bold text-vs-dark mb-2">Let's Connect</h3>
+        <h3 className="text-xl font-bold text-vs-dark mb-2">
+          {shouldPulse ? "👋 Ready to get started?" : "Let's Connect"}
+        </h3>
         <p className="text-sm text-muted-foreground">
           {selectedMainOption === "schedule"
             ? "Choose your preferred meeting type"
-            : "Choose your preferred way to connect with our team"
+            : shouldPulse
+              ? "Schedule a consultation to discuss your project in detail"
+              : "Choose your preferred way to connect with our team"
           }
         </p>
       </div>
