@@ -391,116 +391,82 @@ const ProjectTypeStep = ({
           />
 
           <div className="max-w-md mx-auto">
-            {/* Wheel Picker Style Floor Selector */}
-            <div className="relative">
-              {/* Floor options in a wheel-style layout */}
-              <div className="space-y-3">
-                {[
-                  { value: 1, label: "G+0", desc: "Single floor only (Ground floor)" },
-                  { value: 2, label: "G+1", desc: "Two floors (Ground + 1st floor)" },
-                  { value: 3, label: "G+2", desc: "Three floors (Ground + 2 floors)" },
-                  { value: 4, label: "G+3", desc: "Four floors (Ground + 3 floors)" },
-                  { value: 5, label: "G+4", desc: "Five floors (Ground + 4 floors)" },
-                  { value: 6, label: "G+5", desc: "Six floors (Ground + 5 floors)" },
-                ].map((option, index) => {
-                  const isSelected = (selectedFloorCount || 1) === option.value;
-                  return (
-                    <motion.div
-                      key={option.value}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                      className={cn(
-                        "relative cursor-pointer rounded-xl p-4 transition-all duration-300",
-                        isSelected
-                          ? "bg-gradient-to-r from-vs to-vs-light shadow-lg scale-105 border-2 border-vs"
-                          : "bg-gray-50 hover:bg-gray-100 border-2 border-gray-200 hover:border-gray-300"
-                      )}
-                      onClick={() => onSelectFloorCount(option.value)}
-                    >
-                      <div className="flex items-center gap-4">
-                        {/* Floor indicator icon */}
-                        <div className={cn(
-                          "flex items-center justify-center size-16 rounded-lg transition-all duration-300",
-                          isSelected
-                            ? "bg-white text-vs shadow-md"
-                            : "bg-white/50 text-gray-600"
-                        )}>
-                          <div className="text-center">
-                            <Layers className={cn(
-                              "size-6 mx-auto mb-1",
-                              isSelected ? "text-vs" : "text-gray-500"
-                            )} />
-                            <span className={cn(
-                              "text-xs font-bold",
-                              isSelected ? "text-vs" : "text-gray-600"
-                            )}>
-                              {option.value}
-                            </span>
-                          </div>
-                        </div>
+            {/* Compact Floor Count Input */}
+            <div className="flex flex-col items-center gap-4">
+              {/* G+ Format Display */}
+              <div className="flex items-center gap-4 w-full max-w-sm">
+                <div className="flex-1 text-right">
+                  <motion.div
+                    key={selectedFloorCount || 1}
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-vs to-vs-light rounded-xl shadow-lg"
+                  >
+                    <Layers className="size-6 text-white" />
+                    <span className="text-4xl font-bold text-white">
+                      G+{Math.max(0, (selectedFloorCount || 1) - 1)}
+                    </span>
+                  </motion.div>
+                </div>
 
-                        {/* Floor label and description */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h5 className={cn(
-                              "text-2xl font-bold",
-                              isSelected ? "text-white" : "text-gray-900"
-                            )}>
-                              {option.label}
-                            </h5>
-                            {isSelected && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: "spring", stiffness: 200 }}
-                              >
-                                <Check className="size-6 text-white" />
-                              </motion.div>
-                            )}
-                          </div>
-                          <p className={cn(
-                            "text-sm",
-                            isSelected ? "text-white/90" : "text-gray-600"
-                          )}>
-                            {option.desc}
-                          </p>
-                        </div>
-
-                        {/* Visual floor indicator bars */}
-                        <div className="flex flex-col-reverse gap-1">
-                          {Array.from({ length: option.value }, (_, i) => (
-                            <div
-                              key={i}
-                              className={cn(
-                                "h-2 rounded-full transition-all duration-300",
-                                isSelected
-                                  ? "bg-white w-8"
-                                  : "bg-gray-400 w-6"
-                              )}
-                              style={{
-                                width: isSelected ? `${32 - i * 2}px` : `${24 - i * 2}px`
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={selectedFloorCount || 1}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 1;
+                        if (value >= 1 && value <= 99) {
+                          onSelectFloorCount(value);
+                        }
+                      }}
+                      className="w-full text-3xl font-bold text-center border-2 border-vs/30 focus:border-vs rounded-xl py-3 px-4 outline-none transition-colors bg-white shadow-sm"
+                      placeholder="1"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">
+                      floors
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Help text */}
-              <div className="mt-6 text-center">
-                <p className="text-sm text-[#4f090c]/70">
-                  {selectedConstructionSubtype
-                    ? `Select the number of floors for your ${selectedConstructionSubtype}`
-                    : "Select total number of floors in your home"}
+              {/* Description */}
+              <div className="text-center">
+                <p className="text-sm text-gray-700 font-medium mb-1">
+                  {(selectedFloorCount || 1) === 1
+                    ? "Single floor only (Ground floor)"
+                    : `${selectedFloorCount} floors total`}
                 </p>
+                <p className="text-xs text-gray-500">
+                  {selectedConstructionSubtype
+                    ? `Enter the number of floors for your ${selectedConstructionSubtype}`
+                    : "Enter total number of floors in your home"}
+                </p>
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[1, 2, 3, 4, 5].map((count) => (
+                  <button
+                    key={count}
+                    onClick={() => onSelectFloorCount(count)}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                      (selectedFloorCount || 1) === count
+                        ? "bg-vs text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    )}
+                  >
+                    G+{count - 1}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* G+ Format Visual Guide */}
+            {/* Visual Floor Structure */}
             {selectedFloorCount && selectedFloorCount > 1 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -512,14 +478,14 @@ const ProjectTypeStep = ({
                   <Layers className="size-5 text-purple-600" />
                   <h5 className="font-semibold text-purple-900">G+{selectedFloorCount - 1} Structure</h5>
                 </div>
-                <div className="space-y-1 text-xs text-purple-800">
+                <div className="grid grid-cols-2 gap-2 text-xs text-purple-800">
                   {Array.from({ length: selectedFloorCount }, (_, i) => selectedFloorCount - i).map((floor, index) => (
                     <div key={floor} className="flex items-center gap-2 py-1">
                       <div className={cn(
-                        "size-3 rounded-sm",
+                        "size-2 rounded-sm",
                         index === 0 ? "bg-purple-500" : "bg-blue-400"
                       )}></div>
-                      <span className="font-medium">
+                      <span className="font-medium text-xs">
                         {floor === 1 ? "Ground Floor" : `${floor - 1}${getOrdinalSuffix(floor - 1)} Floor`}
                       </span>
                     </div>
