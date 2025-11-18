@@ -69,10 +69,15 @@ const PhaseTimelineCost = ({ estimate }: PhaseTimelineCostProps) => {
     return durations;
   };
 
-  // Check if this is an interior-only project
+  // Check project work types
   const isInteriorOnly = estimate.workTypes?.includes("interiors") &&
-                         !estimate.workTypes?.includes("construction");
+                         !estimate.workTypes?.includes("construction") &&
+                         !estimate.workTypes?.includes("landscape");
+  const isLandscapeOnly = estimate.workTypes?.includes("landscape") &&
+                          !estimate.workTypes?.includes("construction") &&
+                          !estimate.workTypes?.includes("interiors");
   const hasConstruction = estimate.workTypes?.includes("construction");
+  const hasLandscape = estimate.workTypes?.includes("landscape");
 
   // Calculate proper timeline phases
   let currentMonth = 1;
@@ -165,6 +170,45 @@ const PhaseTimelineCost = ({ estimate }: PhaseTimelineCostProps) => {
     }
   });
 
+  // Landscape phases - only if project includes landscape
+  if (hasLandscape) {
+    const landscapeMonths = estimate.timeline.phases.landscape;
+    const landscapeCost = estimate.phaseBreakdown.landscape;
+
+    // Define landscape sub-phases with their percentages
+    const landscapePhaseData = [
+      { name: "Site Preparation & Clearing", timePercent: 0.15, costPercent: 0.10, color: "#90EE90" },
+      { name: "Hardscaping (Paths, Patios)", timePercent: 0.25, costPercent: 0.30, color: "#66CDAA" },
+      { name: "Irrigation & Drainage Systems", timePercent: 0.20, costPercent: 0.20, color: "#48D1CC" },
+      { name: "Softscaping (Plants, Lawns)", timePercent: 0.25, costPercent: 0.25, color: "#3CB371" },
+      { name: "Features & Lighting", timePercent: 0.10, costPercent: 0.10, color: "#2E8B57" },
+      { name: "Final Touches & Handover", timePercent: 0.05, costPercent: 0.05, color: "#228B22" }
+    ];
+
+    // Distribute months properly to ensure they sum to landscapeMonths
+    const landscapeDurations = distributeMonths(
+      landscapeMonths,
+      landscapePhaseData.map(p => p.timePercent)
+    );
+
+    // Create phases with properly distributed durations
+    landscapePhaseData.forEach((phaseData, index) => {
+      const duration = landscapeDurations[index];
+      if (duration > 0) {
+        phases.push({
+          name: phaseData.name,
+          duration: duration,
+          cost: landscapeCost * phaseData.costPercent,
+          percentage: (landscapeCost * phaseData.costPercent / estimate.totalCost) * 100,
+          color: phaseData.color,
+          startMonth: currentMonth,
+          endMonth: currentMonth + duration - 1
+        });
+        currentMonth += duration;
+      }
+    });
+  }
+
   const totalDuration = estimate.timeline.totalMonths;
 
   return (
@@ -177,6 +221,11 @@ const PhaseTimelineCost = ({ estimate }: PhaseTimelineCostProps) => {
         {isInteriorOnly && (
           <p className="text-[10px] text-yellow-700 mt-1">
             Interior-only project (no construction work)
+          </p>
+        )}
+        {isLandscapeOnly && (
+          <p className="text-[10px] text-yellow-700 mt-1">
+            Landscape-only project
           </p>
         )}
       </div>
@@ -245,15 +294,29 @@ const PhaseTimelineCost = ({ estimate }: PhaseTimelineCostProps) => {
           </div>
         )}
 
-        <div className="bg-orange-50 p-2 rounded-lg border border-orange-100">
-          <p className="text-[10px] text-orange-700 mb-0.5">Finishes & Interiors</p>
-          <p className="text-sm font-bold text-orange-900">
-            {formatCurrency(estimate.phaseBreakdown.interiors)}
-          </p>
-          <p className="text-[10px] text-orange-600">
-            {((estimate.phaseBreakdown.interiors / estimate.totalCost) * 100).toFixed(0)}% of total
-          </p>
-        </div>
+        {estimate.phaseBreakdown.interiors > 0 && (
+          <div className="bg-orange-50 p-2 rounded-lg border border-orange-100">
+            <p className="text-[10px] text-orange-700 mb-0.5">Finishes & Interiors</p>
+            <p className="text-sm font-bold text-orange-900">
+              {formatCurrency(estimate.phaseBreakdown.interiors)}
+            </p>
+            <p className="text-[10px] text-orange-600">
+              {((estimate.phaseBreakdown.interiors / estimate.totalCost) * 100).toFixed(0)}% of total
+            </p>
+          </div>
+        )}
+
+        {hasLandscape && (
+          <div className="bg-green-50 p-2 rounded-lg border border-green-100">
+            <p className="text-[10px] text-green-700 mb-0.5">Landscape Phase</p>
+            <p className="text-sm font-bold text-green-900">
+              {formatCurrency(estimate.phaseBreakdown.landscape)}
+            </p>
+            <p className="text-[10px] text-green-600">
+              {((estimate.phaseBreakdown.landscape / estimate.totalCost) * 100).toFixed(0)}% of total
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

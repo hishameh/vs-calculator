@@ -122,6 +122,7 @@ const initialEstimate: ProjectEstimate = {
     planning: 0,
     construction: 0,
     interiors: 0,
+    landscape: 0,
   },
   timeline: {
     totalMonths: 0,
@@ -129,6 +130,7 @@ const initialEstimate: ProjectEstimate = {
       planning: 0,
       construction: 0,
       interiors: 0,
+      landscape: 0,
     },
   },
 };
@@ -238,20 +240,35 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
 
     // Check if this is an interior-only project
     const isInteriorOnly = estimate.workTypes?.includes("interiors") &&
-                          !estimate.workTypes?.includes("construction");
+                          !estimate.workTypes?.includes("construction") &&
+                          !estimate.workTypes?.includes("landscape");
+    const isLandscapeOnly = estimate.workTypes?.includes("landscape") &&
+                            !estimate.workTypes?.includes("construction") &&
+                            !estimate.workTypes?.includes("interiors");
     const hasConstruction = estimate.workTypes?.includes("construction");
     const hasInteriors = estimate.workTypes?.includes("interiors");
+    const hasLandscape = estimate.workTypes?.includes("landscape");
 
     // Base timeline in months
     let planningMonths = 2;
     let constructionMonths = hasConstruction ? 6 : 0;
     let interiorsMonths = hasInteriors ? 2 : 0;
+    let landscapeMonths = hasLandscape ? 3 : 0;
 
     // For interior-only projects, reduce planning time
     if (isInteriorOnly) {
       planningMonths = 1;
       constructionMonths = 0;
       interiorsMonths = 3; // More time for detailed interior work
+      landscapeMonths = 0;
+    }
+
+    // For landscape-only projects, adjust timeline
+    if (isLandscapeOnly) {
+      planningMonths = 1;
+      constructionMonths = 0;
+      interiorsMonths = 0;
+      landscapeMonths = 3; // Base landscape work duration
     }
 
     // Project type adjustment (only if construction is involved)
@@ -274,6 +291,9 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
     }
     if (hasInteriors) {
       interiorsMonths += Math.floor(areaAddition / 2);
+    }
+    if (hasLandscape) {
+      landscapeMonths += Math.floor(areaAddition / 3);
     }
 
     // Quality level adjustments - premium and luxury projects take longer
@@ -308,6 +328,9 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
     if (hasInteriors) {
       interiorsMonths = interiorsMonths * qualityMultiplier;
     }
+    if (hasLandscape) {
+      landscapeMonths = landscapeMonths * qualityMultiplier;
+    }
 
     // Complexity adjustment
     const complexityFactor = 1 + ((estimate.complexity - 5) * 0.1);
@@ -317,18 +340,23 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
     if (hasInteriors) {
       interiorsMonths = Math.ceil(interiorsMonths * complexityFactor);
     }
+    if (hasLandscape) {
+      landscapeMonths = Math.ceil(landscapeMonths * complexityFactor);
+    }
 
     // Ensure minimum values
     planningMonths = Math.max(1, Math.round(planningMonths));
     constructionMonths = hasConstruction ? Math.max(3, Math.round(constructionMonths)) : 0;
     interiorsMonths = hasInteriors ? Math.max(1, Math.round(interiorsMonths)) : 0;
+    landscapeMonths = hasLandscape ? Math.max(2, Math.round(landscapeMonths)) : 0;
 
     return {
-      totalMonths: planningMonths + constructionMonths + interiorsMonths,
+      totalMonths: planningMonths + constructionMonths + interiorsMonths + landscapeMonths,
       phases: {
         planning: planningMonths,
         construction: constructionMonths,
         interiors: interiorsMonths,
+        landscape: landscapeMonths,
       },
     };
   }, []);
@@ -380,18 +408,37 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
     const totalCost = totalBeforeTax + gst;
 
     // 11. Calculate phase breakdown
-    // Check if this is an interiors-only project
+    // Check project work types
     const isInteriorsOnly = currentEstimate.workTypes?.includes("interiors") &&
-                           !currentEstimate.workTypes?.includes("construction");
+                           !currentEstimate.workTypes?.includes("construction") &&
+                           !currentEstimate.workTypes?.includes("landscape");
+    const isLandscapeOnly = currentEstimate.workTypes?.includes("landscape") &&
+                           !currentEstimate.workTypes?.includes("construction") &&
+                           !currentEstimate.workTypes?.includes("interiors");
     const hasConstruction = currentEstimate.workTypes?.includes("construction");
+    const hasLandscape = currentEstimate.workTypes?.includes("landscape");
 
     const planningCost = totalCost * 0.08;
+
+    // Distribute remaining cost proportionally across phases
+    const remainingCost = totalCost - planningCost;
+
+    // Count active work types
+    const workTypeCount = [hasConstruction, currentEstimate.workTypes?.includes("interiors"), hasLandscape].filter(Boolean).length;
+
     const constructionPhaseCost = hasConstruction
-      ? constructionCost + (core * 0.6) + professionalFees * 0.5
+      ? constructionCost + (core * 0.6) + (professionalFees * 0.5 / workTypeCount)
       : 0;
+
+    const landscapePhaseCost = hasLandscape
+      ? (isLandscapeOnly ? remainingCost : (totalCost * 0.15)) // 15% of total for landscape when combined
+      : 0;
+
     const interiorsPhaseCost = isInteriorsOnly
       ? totalCost - planningCost
-      : interiors + finishes + (core * 0.4) + professionalFees * 0.5 + contingency + gst;
+      : (currentEstimate.workTypes?.includes("interiors")
+          ? interiors + finishes + (core * 0.4) + (professionalFees * 0.5 / workTypeCount) + (hasLandscape ? 0 : contingency + gst)
+          : 0);
 
     // 12. Calculate timeline
     const timeline = calculateTimeline(currentEstimate);
@@ -409,6 +456,7 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
         planning: Math.round(planningCost),
         construction: hasConstruction ? Math.round(constructionPhaseCost) : 0,
         interiors: Math.round(interiorsPhaseCost),
+        landscape: hasLandscape ? Math.round(landscapePhaseCost) : 0,
       },
       timeline,
     };

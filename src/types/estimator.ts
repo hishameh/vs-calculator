@@ -14,6 +14,7 @@ export interface PhaseBreakdown {
   planning: number;
   construction: number;
   interiors: number;
+  landscape: number;
 }
 
 // Timeline information
@@ -23,6 +24,7 @@ export interface Timeline {
     planning: number;
     construction: number;
     interiors: number;
+    landscape: number;
   };
 }
 
