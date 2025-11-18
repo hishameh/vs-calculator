@@ -27,7 +27,7 @@ const ImprovedCostVisualization = ({ estimate }: ImprovedCostVisualizationProps)
     { name: 'Services', value: estimate.categoryBreakdown.core, color: COLORS.core },
     { name: 'Finishes', value: estimate.categoryBreakdown.finishes, color: COLORS.finishes },
     { name: 'Interiors', value: estimate.categoryBreakdown.interiors, color: COLORS.interiors },
-  ].filter(item => item.value > 0);
+  ].filter(item => item.value >= 1); // Filter out zero or near-zero values
 
   const barData = categoryData.map(item => ({
     name: item.name,

@@ -39,7 +39,7 @@ const CostTreeMap = ({ estimate, showLabels = false }: CostTreeMapProps) => {
       const coreTotal = estimate.categoryBreakdown.core;
       const finishesTotal = estimate.categoryBreakdown.finishes;
       const interiorsTotal = estimate.categoryBreakdown.interiors;
-      const constructionTotal = estimate.phaseBreakdown.construction;
+      const constructionTotal = estimate.categoryBreakdown.construction;
       
       // Core Components breakdown
       const coreItems: TreeMapItem[] = [];
@@ -209,33 +209,33 @@ const CostTreeMap = ({ estimate, showLabels = false }: CostTreeMapProps) => {
       
       // Build category structure
       const categories = [];
-      
-      if (constructionItems.length > 0 && constructionTotal > 0) {
-        categories.push({ 
-          name: "Construction", 
-          children: constructionItems, 
-          color: COLOR_CATEGORIES["Construction"] 
+
+      if (constructionItems.length > 0 && constructionTotal >= 1) {
+        categories.push({
+          name: "Construction",
+          children: constructionItems,
+          color: COLOR_CATEGORIES["Construction"]
         });
       }
-      if (coreItems.length > 0 && coreTotal > 0) {
-        categories.push({ 
-          name: "Core Components", 
-          children: coreItems, 
-          color: COLOR_CATEGORIES["Core Components"] 
+      if (coreItems.length > 0 && coreTotal >= 1) {
+        categories.push({
+          name: "Core Components",
+          children: coreItems,
+          color: COLOR_CATEGORIES["Core Components"]
         });
       }
-      if (finishItems.length > 0 && finishesTotal > 0) {
-        categories.push({ 
-          name: "Finishes", 
-          children: finishItems, 
-          color: COLOR_CATEGORIES["Finishes"] 
+      if (finishItems.length > 0 && finishesTotal >= 1) {
+        categories.push({
+          name: "Finishes",
+          children: finishItems,
+          color: COLOR_CATEGORIES["Finishes"]
         });
       }
-      if (interiorItems.length > 0 && interiorsTotal > 0) {
-        categories.push({ 
-          name: "Interiors", 
-          children: interiorItems, 
-          color: COLOR_CATEGORIES["Interiors"] 
+      if (interiorItems.length > 0 && interiorsTotal >= 1) {
+        categories.push({
+          name: "Interiors",
+          children: interiorItems,
+          color: COLOR_CATEGORIES["Interiors"]
         });
       }
       
