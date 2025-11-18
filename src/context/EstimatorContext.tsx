@@ -375,10 +375,21 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
       ? currentEstimate.area * 0.092903
       : currentEstimate.area;
 
-    // If plinth area is selected, multiply by floor count to get total built-up area
-    const areaInSqM = currentEstimate.areaInputType === "plinth" && currentEstimate.floorCount
-      ? baseAreaInSqM * currentEstimate.floorCount
-      : baseAreaInSqM;
+    // Calculate effective area for cost estimation based on area input type
+    let areaInSqM: number;
+    if (currentEstimate.areaInputType === "plot" && currentEstimate.builtUpArea) {
+      // For plot area, use the calculated built-up area from FSI validation (already in sqm)
+      areaInSqM = currentEstimate.builtUpArea;
+    } else if (currentEstimate.areaInputType === "plinth" && currentEstimate.floorCount) {
+      // For plinth area, multiply by floor count to get total built-up area
+      areaInSqM = baseAreaInSqM * currentEstimate.floorCount;
+    } else if (currentEstimate.areaInputType === "builtup") {
+      // For built-up area, use as-is (already total)
+      areaInSqM = baseAreaInSqM;
+    } else {
+      // Default case (for backwards compatibility)
+      areaInSqM = baseAreaInSqM;
+    }
 
     // 1. Calculate base construction cost
     const constructionCost = calculateConstructionCost(
@@ -578,10 +589,10 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
             });
             return false;
           }
-          if (estimate.constructionSubtype === "house" && !estimate.areaInputType) {
+          if (!estimate.areaInputType) {
             toast({
               title: "Area Type Required",
-              description: "Please select whether you'll provide plot area or plinth area.",
+              description: "Please select the type of area you'll provide (plot area, plinth area, or built-up area).",
               variant: "destructive",
             });
             return false;
