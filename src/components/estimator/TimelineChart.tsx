@@ -124,6 +124,9 @@ const PhaseTimelineCost = ({ estimate }: PhaseTimelineCostProps) => {
 
   const totalDuration = estimate.timeline.totalMonths;
 
+  // Filter out phases with zero duration or cost (e.g., construction phases when only interiors is selected)
+  const activePhases = phases.filter(phase => phase.duration > 0 && phase.cost >= 1);
+
   return (
     <div className="space-y-3">
       {/* Overall duration banner */}
@@ -135,7 +138,7 @@ const PhaseTimelineCost = ({ estimate }: PhaseTimelineCostProps) => {
 
       {/* Phase breakdown */}
       <div className="space-y-2">
-        {phases.map((phase, index) => (
+        {activePhases.map((phase, index) => (
           <div key={index} className="space-y-1">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-gray-700 font-medium">{phase.name}</span>

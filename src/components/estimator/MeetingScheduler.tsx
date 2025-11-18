@@ -6,7 +6,7 @@ import CalBookingForm from "./CalBookingForm";
 import CalEmbed from "./CalEmbed";
 import { isCalComConfigured } from "@/utils/calcom";
 
-type MainOptionType = "schedule" | "api-booking" | "cal-embed" | "whatsapp" | "email";
+type MainOptionType = "schedule" | "api-booking" | "cal-embed" | "cal-embed-30min" | "whatsapp" | "email";
 type ScheduleSubOption = "on-site" | "in-office" | "virtual";
 
 interface MainOption {
@@ -54,9 +54,16 @@ const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProp
   const mainOptions: MainOption[] = [
     {
       id: "cal-embed",
-      title: "Book Consultation",
-      description: "View live availability and book instantly",
+      title: "15-Min Quick Call",
+      description: "Quick consultation to discuss basics",
       icon: <CalendarCheck className="size-6" />,
+      hasSubOptions: true,
+    },
+    {
+      id: "cal-embed-30min",
+      title: "30-Min Detailed Call",
+      description: "In-depth discussion of your project",
+      icon: <Clock className="size-6" />,
       hasSubOptions: true,
     },
     ...(isCalComConfigured() ? [{
@@ -216,6 +223,30 @@ const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProp
                 calLink="vanilla-somethin-nezld5/15min"
                 config={{ layout: "month_view" }}
                 namespace="15min"
+              />
+            </div>
+          </motion.div>
+        ) : selectedMainOption === "cal-embed-30min" ? (
+          <motion.div
+            key="cal-embed-30min"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Back button */}
+            <button
+              onClick={handleBack}
+              className="mb-4 text-sm text-vs hover:text-vs/80 flex items-center gap-1 transition-colors"
+            >
+              ← Back to main options
+            </button>
+
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <CalEmbed
+                calLink="vanilla-somethin-nezld5/30min"
+                config={{ layout: "month_view" }}
+                namespace="30min"
               />
             </div>
           </motion.div>
