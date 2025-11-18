@@ -10,9 +10,13 @@ export const generateEstimatePDF = (estimate: ProjectEstimate) => {
 
   // Helper functions
   const formatCurrency = (amount: number) => {
-    // Format without Intl to avoid spaces in PDF
-    const formatted = Math.round(amount).toLocaleString('en-IN');
-    return `₹${formatted}`.replace(/\s/g, ''); // Remove all spaces
+    // Use Rs. instead of ₹ for better PDF compatibility (jsPDF Helvetica doesn't support Rupee symbol)
+    const formatted = Math.round(amount).toLocaleString('en-IN', {
+      useGrouping: true,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+    return `Rs. ${formatted}`;
   };
 
   const toSentenceCase = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s;
