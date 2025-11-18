@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Ruler, SwitchCamera, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { Ruler, SwitchCamera, AlertTriangle, CheckCircle2, Info, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AnimatedText from "@/components/AnimatedText";
 import { ConstructionSubtype, AreaInputType } from "@/types/estimator";
@@ -188,8 +188,8 @@ const AreaStep = ({
       return "What's the plot/site area?";
     } else if (areaInputType === "plinth") {
       return "What's the plinth area (ground floor)?";
-    } else if (constructionSubtype === "apartment") {
-      return "What's the plinth area per floor?";
+    } else if (areaInputType === "builtup") {
+      return "What's the total built-up area?";
     }
     return "What's the approximate area of your project?";
   };
@@ -292,6 +292,8 @@ const AreaStep = ({
             ? "Enter the plot/site area. We'll calculate the plinth (ground floor) area based on FSI rules."
             : areaInputType === "plinth"
             ? "Enter the ground floor area only. We'll calculate total built-up area based on the number of floors."
+            : areaInputType === "builtup"
+            ? "Enter the total built-up area across all floors."
             : "Enter the area or use the slider to set your project size. Toggle between square feet and square meters as needed."}
         </p>
       </div>

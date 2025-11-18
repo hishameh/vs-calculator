@@ -54,7 +54,7 @@ export type LandscapeArea =
 export type ConstructionSubtype = "house" | "apartment";
 
 // Area input type for construction
-export type AreaInputType = "plot" | "plinth";
+export type AreaInputType = "plot" | "plinth" | "builtup";
 
 // Main project estimate interface
 export interface ProjectEstimate {

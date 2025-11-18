@@ -497,8 +497,8 @@ const ProjectTypeStep = ({
         </motion.div>
       )}
 
-      {/* Area Type Selection (Conditional - for House construction OR Interiors) */}
-      {(selectedConstructionSubtype === "house" || selectedWorkTypes.includes("interiors")) && (
+      {/* Area Type Selection (Conditional - for House/Apartment construction OR Interiors) */}
+      {(selectedConstructionSubtype || selectedWorkTypes.includes("interiors")) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -509,14 +509,18 @@ const ProjectTypeStep = ({
             className="text-xl font-display mb-6 text-center"
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          <div className={cn(
+            "grid gap-4 max-w-3xl mx-auto",
+            selectedConstructionSubtype === "house" ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"
+          )}>
+            {/* Plot Area - Only for houses */}
             {selectedConstructionSubtype === "house" && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
                 className={cn(
-                  "group flex flex-col border rounded-lg p-6 cursor-pointer transition-all duration-300 hover:shadow-md",
+                  "group flex flex-col border rounded-lg p-5 cursor-pointer transition-all duration-300 hover:shadow-md",
                   selectedAreaInputType === "plot"
                     ? "border-vs bg-vs/5 shadow-sm"
                     : "border-primary/10 hover:border-primary/30"
@@ -525,59 +529,114 @@ const ProjectTypeStep = ({
               >
                 <div className="flex items-start gap-3">
                   <div className={cn(
-                    "flex items-center justify-center size-12 rounded-lg transition-colors",
+                    "flex items-center justify-center size-10 rounded-lg transition-colors flex-shrink-0",
                     selectedAreaInputType === "plot"
                       ? "bg-vs text-white"
                       : "bg-primary/5 text-primary/70 group-hover:bg-primary/10"
                   )}>
-                    <Layers className="size-6" />
+                    <Layers className="size-5" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-[#4f090c] mb-1">Plot/Site Area</h4>
-                    <p className="text-sm text-[#4f090c]/70">
-                      Total land area. We'll calculate plinth area based on FSI rules for your city.
+                    <h4 className="text-base font-semibold text-[#4f090c] mb-1">Plot/Site Area</h4>
+                    <p className="text-xs text-[#4f090c]/70">
+                      Total land area. FSI-based calculation.
                     </p>
                   </div>
                 </div>
               </motion.div>
             )}
 
+            {/* Plinth Area */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: selectedConstructionSubtype === "house" ? 0.05 : 0 }}
               className={cn(
-                "group flex flex-col border rounded-lg p-6 cursor-pointer transition-all duration-300 hover:shadow-md",
-                selectedAreaInputType === "plinth" || !selectedConstructionSubtype
+                "group flex flex-col border rounded-lg p-5 cursor-pointer transition-all duration-300 hover:shadow-md",
+                selectedAreaInputType === "plinth" || (!selectedConstructionSubtype && !selectedAreaInputType)
                   ? "border-vs bg-vs/5 shadow-sm"
-                  : "border-primary/10 hover:border-primary/30",
-                !selectedConstructionSubtype && selectedWorkTypes.includes("interiors") ? "col-span-2" : ""
+                  : "border-primary/10 hover:border-primary/30"
               )}
               onClick={() => onSelectAreaInputType("plinth")}
             >
               <div className="flex items-start gap-3">
                 <div className={cn(
-                  "flex items-center justify-center size-12 rounded-lg transition-colors",
-                  selectedAreaInputType === "plinth" || !selectedConstructionSubtype
+                  "flex items-center justify-center size-10 rounded-lg transition-colors flex-shrink-0",
+                  selectedAreaInputType === "plinth" || (!selectedConstructionSubtype && !selectedAreaInputType)
                     ? "bg-vs text-white"
                     : "bg-primary/5 text-primary/70 group-hover:bg-primary/10"
                 )}>
-                  <Building2 className="size-6" />
+                  <Home className="size-5" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-[#4f090c] mb-1">Plinth Area</h4>
-                  <p className="text-sm text-[#4f090c]/70">
-                    Ground floor area only (excluding upper floors). For G+ format homes, enter only the ground floor area.
+                  <h4 className="text-base font-semibold text-[#4f090c] mb-1">Plinth Area</h4>
+                  <p className="text-xs text-[#4f090c]/70">
+                    Ground floor only. Total = plinth × floors.
                   </p>
-                  {selectedFloorCount && selectedFloorCount > 1 && (
-                    <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-800">
-                      <span className="font-medium">Note:</span> For G+{selectedFloorCount - 1} format, we'll calculate total area as plinth × {selectedFloorCount} floors
-                    </div>
-                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Built-up Area */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: selectedConstructionSubtype === "house" ? 0.1 : 0.05 }}
+              className={cn(
+                "group flex flex-col border rounded-lg p-5 cursor-pointer transition-all duration-300 hover:shadow-md",
+                selectedAreaInputType === "builtup"
+                  ? "border-vs bg-vs/5 shadow-sm"
+                  : "border-primary/10 hover:border-primary/30"
+              )}
+              onClick={() => onSelectAreaInputType("builtup")}
+            >
+              <div className="flex items-start gap-3">
+                <div className={cn(
+                  "flex items-center justify-center size-10 rounded-lg transition-colors flex-shrink-0",
+                  selectedAreaInputType === "builtup"
+                    ? "bg-vs text-white"
+                    : "bg-primary/5 text-primary/70 group-hover:bg-primary/10"
+                )}>
+                  <Building2 className="size-5" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-base font-semibold text-[#4f090c] mb-1">Built-up Area</h4>
+                  <p className="text-xs text-[#4f090c]/70">
+                    Total area across all floors.
+                  </p>
                 </div>
               </div>
             </motion.div>
           </div>
+
+          {/* Info Notes */}
+          {selectedAreaInputType && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 max-w-3xl mx-auto"
+            >
+              {selectedAreaInputType === "plot" && (
+                <>
+                  <p className="font-medium mb-1">Plot/Site Area:</p>
+                  <p>We'll verify FSI compliance for your city and calculate the built-up area based on floor count.</p>
+                </>
+              )}
+              {selectedAreaInputType === "plinth" && (
+                <>
+                  <p className="font-medium mb-1">Plinth Area:</p>
+                  <p>Enter ground floor area only. {selectedFloorCount && selectedFloorCount > 1 && `For G+${selectedFloorCount - 1}, total = ${selectedFloorCount} × plinth area.`}</p>
+                </>
+              )}
+              {selectedAreaInputType === "builtup" && (
+                <>
+                  <p className="font-medium mb-1">Built-up Area:</p>
+                  <p>Enter the total constructed area across all {selectedFloorCount || 1} floor{(selectedFloorCount || 1) > 1 ? 's' : ''}.</p>
+                </>
+              )}
+            </motion.div>
+          )}
 
           {selectedAreaInputType === "plot" && (
             <motion.div
