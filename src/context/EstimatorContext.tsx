@@ -490,6 +490,34 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
     };
   }, [calculateConstructionCost, calculateComponentCosts, getLocationMultiplier, getProjectTypeMultiplier, calculateTimeline]);
 
+  // Auto-adjust component selections based on work types
+  useEffect(() => {
+    if (estimate.workTypes && estimate.workTypes.length > 0) {
+      const hasInteriors = estimate.workTypes.includes("interiors");
+      const hasConstruction = estimate.workTypes.includes("construction");
+
+      // If interiors is not selected, set all interior components to "none"
+      if (!hasInteriors) {
+        setEstimate(prev => ({
+          ...prev,
+          fixedFurniture: "none",
+          looseFurniture: "none",
+          furnishings: "none",
+          appliances: "none",
+          artefacts: "none",
+        }));
+      }
+
+      // If construction is not selected, set civil quality to "none"
+      if (!hasConstruction) {
+        setEstimate(prev => ({
+          ...prev,
+          civilQuality: "none",
+        }));
+      }
+    }
+  }, [estimate.workTypes]);
+
   // Recalculate whenever relevant fields change
   useEffect(() => {
     if (estimate.area > 0 && estimate.projectType && estimate.city) {

@@ -54,7 +54,7 @@ const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProp
   const mainOptions: MainOption[] = [
     {
       id: "schedule-virtual",
-      title: "Schedule Virtual Meeting",
+      title: "Virtual / Onsite / At Office",
       description: "Book instantly via Cal.com",
       icon: <Calendar className="size-6" />,
       action: () => {
