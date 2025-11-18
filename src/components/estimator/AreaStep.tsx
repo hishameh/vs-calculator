@@ -63,9 +63,17 @@ const AreaStep = ({
       // Calculate typical built-up area based on FSI
       const typicalBuiltUp = calculateTypicalBuiltUpArea(areaInSqm, city, areaUnit);
 
-      // Estimate floor area (assuming 70% of plot area due to setbacks)
-      const estimatedFloorArea = areaInSqm * 0.7;
-      const proposedBuiltUpArea = estimatedFloorArea * floorCount;
+      // Estimate floor area based on plot size (ground floor is ~70-75% of plot area due to setbacks)
+      // Smaller plots get higher percentage, larger plots need more setbacks
+      let groundFloorPercentage = 0.75; // Default 75% for small plots
+      if (areaInSqm > 150) groundFloorPercentage = 0.70; // 70% for plots > 1,600 sqft
+      if (areaInSqm > 200) groundFloorPercentage = 0.68; // 68% for plots > 2,150 sqft
+
+      const groundFloorArea = areaInSqm * groundFloorPercentage;
+      // Upper floors can be slightly larger (including balconies, projections allowed)
+      const upperFloorArea = areaInSqm * 0.75;
+      const additionalFloors = Math.max(0, floorCount - 1);
+      const proposedBuiltUpArea = groundFloorArea + (upperFloorArea * additionalFloors);
 
       // Validate FSI compliance
       const validation = validateFSICompliance(areaInSqm, proposedBuiltUpArea, city);
@@ -372,9 +380,19 @@ const AreaStep = ({
                   <p className="text-sm text-red-900">
                     {(() => {
                       const areaInSqm = areaUnit === "sqft" ? area * 0.092903 : area;
-                      const estimatedFloorArea = areaInSqm * 0.7;
-                      const maxFloors = Math.floor((fsiValidation.maxAllowed) / estimatedFloorArea);
-                      return `With your plot size, you can build up to ${maxFloors} floors to comply with FSI regulations.
+                      // Use same calculation as above
+                      let groundFloorPercentage = 0.75;
+                      if (areaInSqm > 150) groundFloorPercentage = 0.70;
+                      if (areaInSqm > 200) groundFloorPercentage = 0.68;
+                      const groundFloorArea = areaInSqm * groundFloorPercentage;
+                      const upperFloorArea = areaInSqm * 0.75;
+
+                      // Calculate max floors: ground + additional floors
+                      const remainingArea = fsiValidation.maxAllowed - groundFloorArea;
+                      const maxAdditionalFloors = Math.floor(remainingArea / upperFloorArea);
+                      const maxFloors = maxAdditionalFloors + 1;
+
+                      return `With your plot size, you can build up to ${maxFloors} floor${maxFloors > 1 ? 's' : ''} to comply with FSI regulations.
                               Alternatively, increase the plot area or reduce the number of floors.`;
                     })()}
                   </p>

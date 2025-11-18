@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import ImprovedCostVisualization from "./ImprovedCostVisualization";
 import PhaseTimelineCost from "./PhaseTimelineCost";
 import MeetingScheduler from "./MeetingScheduler";
+import DetailedBreakdownSection from "./DetailedBreakdownSection";
+import FAQSection from "./FAQSection";
 import { generateEstimatePDF } from "@/utils/pdfExport";
 import {
   Dialog,
@@ -501,6 +503,9 @@ const ResultsStep = ({ estimate, onReset, onSave }: ResultsStepProps) => {
           </div>
         </div>
 
+        {/* Detailed Cost Breakdown */}
+        <DetailedBreakdownSection estimate={estimate} />
+
         {/* Disclaimer */}
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-xs text-gray-700">
           <p className="font-medium text-orange-800 mb-1">Important Disclaimer:</p>
@@ -537,6 +542,11 @@ const ResultsStep = ({ estimate, onReset, onSave }: ResultsStepProps) => {
         >
           Start New Estimate
         </button>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="mt-6">
+        <FAQSection />
       </div>
 
       {/* Bottom Booking Section */}

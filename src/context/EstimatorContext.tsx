@@ -78,10 +78,11 @@ const COMPONENT_PRICING: Record<string, Record<ComponentOption, number>> = {
 
 // Base construction cost per square meter (foundation, structure, masonry)
 // Includes excavation, foundation, RCC work, brickwork, plastering
+// Based on realistic 2025 Indian construction costs: ₹1,650-₹1,900/sqft
 const BASE_CONSTRUCTION_COST: Record<string, number> = {
-  residential: 7350,    // ₹7,350/sqm for residential (achieves ₹1,750-1,900/sqft target)
-  commercial: 9200,     // ₹9,200/sqm for commercial projects
-  "mixed-use": 11000,   // ₹11,000/sqm for mixed-use developments
+  residential: 18000,   // ₹18,000/sqm for residential (₹1,672/sqft - includes basic finishes)
+  commercial: 22000,    // ₹22,000/sqm for commercial projects
+  "mixed-use": 26000,   // ₹26,000/sqm for mixed-use developments
 };
 
 const initialEstimate: ProjectEstimate = {
