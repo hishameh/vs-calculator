@@ -49,21 +49,15 @@ const PhaseTimelineCost = ({ estimate }: PhaseTimelineCostProps) => {
 
     // Distribute remainder to phases with largest fractional parts
     for (let i = 0; i < remainder; i++) {
-      durations[fractionalParts[i].index]++;
+      if (fractionalParts[i]) {
+        durations[fractionalParts[i].index]++;
+      }
     }
 
-    // Ensure each phase has at least 1 month if total > 0
-    if (totalMonths > 0) {
-      for (let i = 0; i < durations.length; i++) {
-        if (durations[i] === 0) {
-          durations[i] = 1;
-          // Take from the largest phase
-          const maxIndex = durations.indexOf(Math.max(...durations.filter((_, idx) => idx !== i)));
-          if (durations[maxIndex] > 1) {
-            durations[maxIndex]--;
-          }
-        }
-      }
+    // Verify total matches (critical for timeline accuracy)
+    const sum = durations.reduce((a, b) => a + b, 0);
+    if (sum !== totalMonths) {
+      console.warn(`Timeline distribution mismatch: ${sum} !== ${totalMonths}`);
     }
 
     return durations;
