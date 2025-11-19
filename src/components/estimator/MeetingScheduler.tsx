@@ -37,7 +37,6 @@ const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProp
   const [shouldPulse, setShouldPulse] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [showCalWidget, setShowCalWidget] = useState(false);
 
   // Auto-expand when triggered from parent
   useEffect(() => {
@@ -49,6 +48,28 @@ const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProp
     }
   }, [autoExpand, selectedMainOption]);
 
+  // Initialize Cal.com
+  useEffect(() => {
+    (async function () {
+      const cal = await getCalApi({ namespace: "schedule-meeting" });
+      cal("ui", {
+        cssVarsPerTheme: {
+          light: { "cal-brand": "#44080b" }
+        },
+        hideEventTypeDetails: false,
+        layout: "month_view",
+        theme: "light",
+      });
+    })();
+  }, []);
+
+  const openCalWidget = async () => {
+    const cal = await getCalApi({ namespace: "schedule-meeting" });
+    cal("vanilla-somethin-nezld5/15min", {
+      layout: "month_view",
+    });
+  };
+
   const whatsappNumber = "917411349844";
   const email = "hello@vanillasometh.in";
 
@@ -59,7 +80,7 @@ const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProp
       description: "Virtual / Onsite / At Office",
       icon: <Calendar className="size-6" />,
       action: () => {
-        setShowCalWidget(true);
+        openCalWidget();
       }
     },
     {
@@ -170,54 +191,19 @@ const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProp
           {shouldPulse ? "👋 Ready to get started?" : "Let's Connect"}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {showCalWidget
-            ? "Select your preferred date and time for a 15-minute consultation"
-            : shouldPulse
-              ? "Virtual / Onsite / At Office - Schedule a consultation to discuss your project"
-              : "Virtual / Onsite / At Office - Choose your preferred way to connect"}
+          {shouldPulse
+            ? "Virtual / Onsite / At Office - Schedule a consultation to discuss your project"
+            : "Virtual / Onsite / At Office - Choose your preferred way to connect"}
         </p>
       </div>
 
-      <AnimatePresence mode="wait">
-        {showCalWidget ? (
-          <motion.div
-            key="cal-widget"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Back button */}
-            <button
-              onClick={() => setShowCalWidget(false)}
-              className="mb-4 text-sm text-vs hover:text-vs/80 flex items-center gap-1 transition-colors"
-            >
-              ← Back to options
-            </button>
-
-            {/* 15-min Cal.com widget */}
-            <div className="p-4 border-2 border-vs/20 rounded-lg bg-vs/5">
-              <div className="flex items-center gap-3 mb-2">
-                <CalendarCheck className="size-6 text-vs" />
-                <h4 className="font-semibold text-vs-dark">15-Min Consultation</h4>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">Quick call to discuss your project requirements</p>
-              <CalEmbed
-                calLink="vanilla-somethin-nezld5/15min"
-                config={{ layout: "month_view" }}
-                namespace="15min-consultation"
-              />
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="main-options"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-          >
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 20 }}
+        transition={{ duration: 0.3 }}
+        className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+      >
             {mainOptions.map((option, index) => (
               <motion.div
                 key={option.id}
@@ -253,8 +239,6 @@ const MeetingScheduler = ({ autoExpand = false, estimate }: MeetingSchedulerProp
               </motion.div>
             ))}
           </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };
