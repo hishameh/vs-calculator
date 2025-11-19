@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,20 @@ interface ComponentSuggestion {
   artefacts: ComponentOption;
 }
 
-// Component pricing per square meter (same as in EstimatorContext)
+// Location-based cost multipliers (must match EstimatorContext)
+const LOCATION_MULTIPLIERS: Record<string, number> = {
+  "Mumbai": 1.30, "Navi Mumbai": 1.25, "Thane": 1.22,
+  "Delhi": 1.25, "New Delhi": 1.25, "Gurgaon": 1.28, "Noida": 1.22,
+  "Bangalore": 1.20, "Bengaluru": 1.20,
+  "Hyderabad": 1.15, "Chennai": 1.15, "Pune": 1.15,
+  "Ahmedabad": 1.10, "Surat": 1.08, "Jaipur": 1.10,
+  "Kochi": 1.05, "Coimbatore": 1.05, "Indore": 1.05,
+  "Chandigarh": 1.12, "Lucknow": 1.02,
+  "Visakhapatnam": 1.00, "Nagpur": 1.00, "Vadodara": 1.05,
+  "default": 0.95
+};
+
+// Component pricing per square meter (must match EstimatorContext)
 const COMPONENT_PRICING: Record<string, Record<ComponentOption, number>> = {
   civilQuality: { none: 0, standard: 1500, premium: 2300, luxury: 3800 },
   plumbing: { none: 0, standard: 500, premium: 1000, luxury: 2000 },
@@ -66,45 +79,143 @@ const BudgetMatchingStep = ({
 }: BudgetMatchingStepProps) => {
   const [inputBudget, setInputBudget] = useState<string>(budget > 0 ? budget.toString() : "");
   const [suggestions, setSuggestions] = useState<ComponentSuggestion | null>(null);
-  const [estimatedCost, setEstimatedCost] = useState<number>(0);
   const [budgetStatus, setBudgetStatus] = useState<"low" | "moderate" | "good" | "excellent" | null>(null);
 
-  // Calculate area in square meters
-  const areaInSqM = estimate.areaUnit === "sqft" ? estimate.area * 0.092903 : estimate.area;
+  // Calculate effective area (matching EstimatorContext logic)
+  const getEffectiveArea = (): number => {
+    let baseAreaInSqM = estimate.areaUnit === "sqft" ? estimate.area * 0.092903 : estimate.area;
+
+    if (estimate.areaInputType === "plot" && estimate.builtUpArea) {
+      return estimate.builtUpArea;
+    } else if (estimate.areaInputType === "plinth" && estimate.floorCount) {
+      return baseAreaInSqM * estimate.floorCount;
+    } else if (estimate.areaInputType === "builtup") {
+      return baseAreaInSqM;
+    }
+    return baseAreaInSqM;
+  };
+
+  const areaInSqM = getEffectiveArea();
+
+  // Get multipliers (matching EstimatorContext)
+  const getSizeMultiplier = (areaInSqM: number): number => {
+    if (areaInSqM < 50) return 1.20;
+    if (areaInSqM < 100) return 1.12;
+    if (areaInSqM < 200) return 1.05;
+    if (areaInSqM >= 500) return 0.95;
+    return 1.0;
+  };
+
+  const getLocationMultiplier = (): number => {
+    return LOCATION_MULTIPLIERS[estimate.city] || LOCATION_MULTIPLIERS["default"];
+  };
+
+  const getProjectTypeMultiplier = (): number => {
+    let baseMultiplier = 1.0;
+    if (estimate.projectType === "commercial") baseMultiplier = 1.15;
+    else if (estimate.projectType === "mixed-use") baseMultiplier = 1.25;
+
+    const complexityAdjustment = ((estimate.complexity || 5) - 5) * 0.05;
+    return baseMultiplier * (1 + complexityAdjustment);
+  };
+
+  const sizeMultiplier = getSizeMultiplier(areaInSqM);
+  const locationMultiplier = getLocationMultiplier();
+  const projectMultiplier = getProjectTypeMultiplier();
+
+  // Calculate full cost with all multipliers
+  const calculateFullCost = (components: ComponentSuggestion): number => {
+    const hasConstruction = estimate.workTypes?.includes("construction") ?? false;
+    const hasInteriors = estimate.workTypes?.includes("interiors") ?? false;
+
+    // Base construction cost
+    const baseCost = (BASE_CONSTRUCTION_COST[estimate.projectType] || BASE_CONSTRUCTION_COST.residential) * areaInSqM;
+    let qualityMultiplier = 1.0;
+    if (components.civilQuality === "premium") qualityMultiplier = 1.6;
+    else if (components.civilQuality === "luxury") qualityMultiplier = 2.8;
+    else if (components.civilQuality === "none") qualityMultiplier = 0;
+
+    const constructionCost = baseCost * qualityMultiplier * sizeMultiplier;
+
+    // Component costs
+    const civilQualityCost = hasConstruction ? COMPONENT_PRICING.civilQuality[components.civilQuality] * areaInSqM * 0.15 : 0;
+    const core = (
+      civilQualityCost +
+      COMPONENT_PRICING.plumbing[components.plumbing] * areaInSqM +
+      COMPONENT_PRICING.electrical[components.electrical] * areaInSqM +
+      COMPONENT_PRICING.ac[components.ac] * areaInSqM +
+      COMPONENT_PRICING.elevator[components.elevator] * areaInSqM
+    ) * sizeMultiplier;
+
+    const buildingEnvelopeCost = hasConstruction ? COMPONENT_PRICING.buildingEnvelope[components.buildingEnvelope] * areaInSqM : 0;
+    const windowsCost = hasConstruction ? COMPONENT_PRICING.windows[components.windows] * areaInSqM : 0;
+    const finishes = (
+      buildingEnvelopeCost +
+      COMPONENT_PRICING.lighting[components.lighting] * areaInSqM +
+      windowsCost +
+      COMPONENT_PRICING.ceiling[components.ceiling] * areaInSqM +
+      COMPONENT_PRICING.surfaces[components.surfaces] * areaInSqM
+    ) * sizeMultiplier;
+
+    const interiors = hasInteriors ? (
+      COMPONENT_PRICING.fixedFurniture[components.fixedFurniture] * areaInSqM +
+      COMPONENT_PRICING.looseFurniture[components.looseFurniture] * areaInSqM +
+      COMPONENT_PRICING.furnishings[components.furnishings] * areaInSqM +
+      COMPONENT_PRICING.appliances[components.appliances] * areaInSqM +
+      COMPONENT_PRICING.artefacts[components.artefacts] * areaInSqM
+    ) * sizeMultiplier : 0;
+
+    // Apply all multipliers
+    let subtotal = constructionCost + core + finishes + interiors;
+    subtotal *= locationMultiplier;
+    subtotal *= projectMultiplier;
+
+    // Add professional fees and contingency
+    const professionalFees = subtotal * 0.13;
+    const contingency = subtotal * 0.09;
+    const totalBeforeTax = subtotal + professionalFees + contingency;
+    const gst = totalBeforeTax * 0.12;
+
+    return Math.round(totalBeforeTax + gst);
+  };
 
   // Calculate minimum viable budget
   const calculateMinimumBudget = (): number => {
-    const baseCost = (BASE_CONSTRUCTION_COST[estimate.projectType] || BASE_CONSTRUCTION_COST.residential) * areaInSqM;
+    const hasConstruction = estimate.workTypes?.includes("construction") ?? false;
+    const hasInteriors = estimate.workTypes?.includes("interiors") ?? false;
 
-    // Minimum components at standard level
-    const minComponents = (
-      COMPONENT_PRICING.civilQuality.standard * areaInSqM * 0.15 +
-      COMPONENT_PRICING.plumbing.standard * areaInSqM +
-      COMPONENT_PRICING.electrical.standard * areaInSqM +
-      COMPONENT_PRICING.lighting.standard * areaInSqM +
-      COMPONENT_PRICING.ceiling.standard * areaInSqM +
-      COMPONENT_PRICING.surfaces.standard * areaInSqM
-    );
+    const minSuggestions: ComponentSuggestion = {
+      civilQuality: hasConstruction ? "standard" : "none",
+      plumbing: "standard",
+      electrical: "standard",
+      ac: "none",
+      elevator: "none",
+      buildingEnvelope: hasConstruction ? "standard" : "none",
+      lighting: "standard",
+      windows: hasConstruction ? "standard" : "none",
+      ceiling: "standard",
+      surfaces: "standard",
+      fixedFurniture: hasInteriors ? "standard" : "none",
+      looseFurniture: "none",
+      furnishings: "none",
+      appliances: "none",
+      artefacts: "none",
+    };
 
-    const subtotal = baseCost + minComponents;
-    const withOverheads = subtotal * 1.22; // 13% professional fees + 9% contingency
-    const withGST = withOverheads * 1.12; // 12% GST
-
-    return Math.round(withGST);
+    return calculateFullCost(minSuggestions);
   };
 
   const minimumBudget = calculateMinimumBudget();
 
   // Generate budget-based suggestions
   const generateSuggestions = (targetBudget: number): ComponentSuggestion => {
-    const baseCost = (BASE_CONSTRUCTION_COST[estimate.projectType] || BASE_CONSTRUCTION_COST.residential) * areaInSqM;
-    const availableForComponents = (targetBudget / 1.12 / 1.22) - baseCost; // Remove GST and overheads
-    const perSqmBudget = availableForComponents / areaInSqM;
-
     const hasConstruction = estimate.workTypes?.includes("construction") ?? false;
     const hasInteriors = estimate.workTypes?.includes("interiors") ?? false;
 
-    // Default suggestions
+    // Calculate budget ratio
+    const budgetRatio = targetBudget / minimumBudget;
+
+    // Default baseline suggestions
     const suggestion: ComponentSuggestion = {
       civilQuality: hasConstruction ? "standard" : "none",
       plumbing: "standard",
@@ -117,15 +228,15 @@ const BudgetMatchingStep = ({
       ceiling: "standard",
       surfaces: "standard",
       fixedFurniture: hasInteriors ? "standard" : "none",
-      looseFurniture: hasInteriors ? "none" : "none",
-      furnishings: hasInteriors ? "none" : "none",
-      appliances: hasInteriors ? "none" : "none",
+      looseFurniture: "none",
+      furnishings: "none",
+      appliances: "none",
       artefacts: "none",
     };
 
-    // Budget tiers
-    if (perSqmBudget > 8000) {
-      // Luxury budget
+    // Upgrade based on budget ratio
+    if (budgetRatio >= 2.5) {
+      // Luxury budget - 2.5x minimum or more
       suggestion.civilQuality = hasConstruction ? "luxury" : "none";
       suggestion.plumbing = "luxury";
       suggestion.electrical = "luxury";
@@ -141,8 +252,8 @@ const BudgetMatchingStep = ({
       suggestion.furnishings = hasInteriors ? "premium" : "none";
       suggestion.appliances = hasInteriors ? "premium" : "none";
       suggestion.artefacts = hasInteriors ? "standard" : "none";
-    } else if (perSqmBudget > 5000) {
-      // Premium budget
+    } else if (budgetRatio >= 1.8) {
+      // Premium budget - 1.8x to 2.5x minimum
       suggestion.civilQuality = hasConstruction ? "premium" : "none";
       suggestion.plumbing = "premium";
       suggestion.electrical = "premium";
@@ -157,48 +268,21 @@ const BudgetMatchingStep = ({
       suggestion.looseFurniture = hasInteriors ? "standard" : "none";
       suggestion.furnishings = hasInteriors ? "standard" : "none";
       suggestion.appliances = hasInteriors ? "standard" : "none";
-    } else if (perSqmBudget > 3500) {
-      // Good budget
-      suggestion.civilQuality = hasConstruction ? "standard" : "none";
+    } else if (budgetRatio >= 1.3) {
+      // Good budget - 1.3x to 1.8x minimum
+      suggestion.ac = "standard";
       suggestion.plumbing = "premium";
       suggestion.electrical = "premium";
-      suggestion.ac = "standard";
-      suggestion.buildingEnvelope = hasConstruction ? "standard" : "none";
       suggestion.lighting = "premium";
-      suggestion.windows = hasConstruction ? "standard" : "none";
-      suggestion.ceiling = "standard";
       suggestion.surfaces = "premium";
       suggestion.fixedFurniture = hasInteriors ? "standard" : "none";
-      suggestion.looseFurniture = hasInteriors ? "none" : "none";
-      suggestion.furnishings = hasInteriors ? "none" : "none";
-    } else if (perSqmBudget > 2500) {
-      // Standard budget
-      suggestion.ac = "none";
-      suggestion.elevator = "none";
+    } else if (budgetRatio >= 1.1) {
+      // Moderate budget - 1.1x to 1.3x minimum
+      suggestion.ac = "standard";
     }
+    // else keep baseline (minimum) configuration
 
     return suggestion;
-  };
-
-  // Estimate cost with suggestions
-  const estimateCostWithSuggestions = (sug: ComponentSuggestion): number => {
-    const baseCost = (BASE_CONSTRUCTION_COST[estimate.projectType] || BASE_CONSTRUCTION_COST.residential) * areaInSqM;
-
-    const componentCost = Object.entries(sug).reduce((sum, [key, value]) => {
-      const pricing = COMPONENT_PRICING[key];
-      if (!pricing) return sum;
-
-      let cost = pricing[value] * areaInSqM;
-      if (key === "civilQuality") cost *= 0.15;
-
-      return sum + cost;
-    }, 0);
-
-    const subtotal = baseCost + componentCost;
-    const withOverheads = subtotal * 1.22;
-    const withGST = withOverheads * 1.12;
-
-    return Math.round(withGST);
   };
 
   // Handle budget analysis
@@ -215,15 +299,13 @@ const BudgetMatchingStep = ({
     const generatedSuggestions = generateSuggestions(budgetValue);
     setSuggestions(generatedSuggestions);
 
-    const cost = estimateCostWithSuggestions(generatedSuggestions);
-    setEstimatedCost(cost);
-
     // Determine budget status
-    if (budgetValue < minimumBudget * 0.8) {
+    const budgetRatio = budgetValue / minimumBudget;
+    if (budgetRatio < 0.9) {
       setBudgetStatus("low");
-    } else if (budgetValue < minimumBudget * 1.2) {
+    } else if (budgetRatio < 1.3) {
       setBudgetStatus("moderate");
-    } else if (budgetValue < minimumBudget * 2) {
+    } else if (budgetRatio < 1.8) {
       setBudgetStatus("good");
     } else {
       setBudgetStatus("excellent");
@@ -253,6 +335,9 @@ const BudgetMatchingStep = ({
     }
   };
 
+  // Calculate estimated cost with suggestions
+  const estimatedCost = suggestions ? calculateFullCost(suggestions) : 0;
+
   return (
     <div className="space-y-6">
       <div className="mb-6">
@@ -262,7 +347,7 @@ const BudgetMatchingStep = ({
         </h3>
         <p className="text-sm text-muted-foreground">
           Tell us your budget, and we'll suggest the best combination of components to match it.
-          You can always customize these selections later.
+          You can always customize these selections in the next step.
         </p>
       </div>
 
@@ -297,6 +382,9 @@ const BudgetMatchingStep = ({
 
           <div className="text-sm text-muted-foreground">
             <p>Minimum recommended budget for your project: <strong className="text-vs">{formatCurrency(minimumBudget)}</strong></p>
+            <p className="text-xs mt-1 text-muted-foreground/80">
+              This estimate includes location ({estimate.city}), project complexity, and all applicable fees.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -399,7 +487,11 @@ const BudgetMatchingStep = ({
               <Button onClick={handleApplySuggestions} className="flex-1 bg-vs hover:bg-vs/90">
                 Apply These Suggestions
               </Button>
-              <Button variant="outline" onClick={() => setSuggestions(null)}>
+              <Button variant="outline" onClick={() => {
+                setSuggestions(null);
+                setBudgetStatus(null);
+                setInputBudget("");
+              }}>
                 Clear
               </Button>
             </div>
