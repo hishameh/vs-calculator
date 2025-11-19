@@ -56,10 +56,10 @@ const FinishesStep = ({
     },
     {
       key: "windows",
-      title: "Windows & Glazing Systems",
+      title: "Windows, Doors & Glazing",
       icon: <DoorOpen className="size-6" />,
       value: windows,
-      description: "Window frames (aluminum/uPVC/wood), glass types (single/double glazed), acoustic/thermal glazing, sliding/casement systems, and security grills",
+      description: "Main entrance doors, bedroom/bathroom doors, window frames (aluminum/uPVC/wood), glass types (single/double glazed), sliding/casement systems, door hardware & locks, and security grills",
     },
     {
       key: "ceiling",
