@@ -406,8 +406,13 @@ export const EstimatorProvider = ({ children }: { children: React.ReactNode }) =
       // For built-up area, use as-is (already total)
       areaInSqM = baseAreaInSqM;
     } else {
-      // Default case (for backwards compatibility)
-      areaInSqM = baseAreaInSqM;
+      // Default case - if areaInputType is not set but we have multiple floors,
+      // treat as plinth area and multiply by floor count
+      if (currentEstimate.floorCount && currentEstimate.floorCount > 1) {
+        areaInSqM = baseAreaInSqM * currentEstimate.floorCount;
+      } else {
+        areaInSqM = baseAreaInSqM;
+      }
     }
 
     // 1. Calculate base construction cost
